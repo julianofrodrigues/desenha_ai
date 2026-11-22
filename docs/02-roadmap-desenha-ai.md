@@ -16,7 +16,10 @@ Status: ✅ concluída · 🚧 em andamento · ⏳ aguardando
 
 ---
 
-## Fase 1 · Seletor de imagem local ✅ (aguardando revisão)
+## Fase 1 · Seletor de imagem local ✅
+
+> Na Fase 3, a prévia da imagem na Home foi substituída pelo histórico
+> "Continuar desenhando".
 
 **Entrega:** tela inicial onde o usuário escolhe uma imagem salva no aparelho
 e vê uma prévia.
@@ -64,7 +67,9 @@ widget tests com dependência falsa.
 
 ---
 
-## Fase 2 · AR Drawing / sobreposição ⏳
+## Fase 2 · AR Drawing / sobreposição ✅
+
+> Detalhes da implementação: `docs/03-fase2-camera-e-gestos.md`.
 
 **Entrega:** tela de desenho com a câmera traseira ao vivo em tela cheia e a
 imagem de referência por cima, ajustável.
@@ -110,7 +115,12 @@ Plugins com código nativo, permissões em tempo de execução, ciclo de vida
 
 ---
 
-## Fase 3 · Persistência local ⏳
+## Fase 3 · Persistência local 🚧 (aguardando testes no aparelho)
+
+> Implementado: cópia da imagem, salvamento automático dos ajustes,
+> histórico "Continuar desenhando" e exclusão. Ainda **não** implementado:
+> progresso do traçado (marcar regiões / foto de progresso). Detalhes:
+> `docs/04-fase3-persistencia-offline.md`.
 
 **Entrega:** o app lembra do que o usuário estava fazendo, mesmo depois de
 fechado.

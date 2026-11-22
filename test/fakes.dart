@@ -1,8 +1,13 @@
 // Implementações falsas dos serviços, compartilhadas entre os testes.
+import 'dart:io';
+
 import 'package:camera/camera.dart';
+import 'package:desenha_ai/features/drawing/models/drawing_settings.dart';
 import 'package:desenha_ai/features/drawing/services/camera_service.dart';
 import 'package:desenha_ai/features/drawing/services/screen_wake_lock.dart';
 import 'package:desenha_ai/features/image_selection/data/local_image_source.dart';
+import 'package:desenha_ai/features/projects/models/drawing_project.dart';
+import 'package:desenha_ai/features/projects/services/project_repository.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -65,6 +70,103 @@ class FakeCameraService implements CameraService {
     _status.dispose();
     _torchOn.dispose();
   }
+}
+
+/// Histórico em memória. Guarda os bytes das imagens num mapa e registra
+/// cada gravação em [saves] para os testes conferirem o salvamento
+/// automático.
+class FakeProjectRepository implements ProjectRepository {
+  FakeProjectRepository({List<DrawingProject> initial = const []}) {
+    for (final p in initial) {
+      _projects[p.id] = p;
+      _images[p.id] = pngBytes;
+    }
+  }
+
+  final _projects = <String, DrawingProject>{};
+  final _images = <String, Uint8List>{};
+  final saves = <DrawingProject>[];
+  final deleted = <String>[];
+  var _nextId = 0;
+
+  /// Relógio controlado: cada chamada avança 1 minuto, para a ordem do
+  /// histórico ser previsível.
+  var _now = DateTime(2025, 1, 1, 12);
+  DateTime _tick() => _now = _now.add(const Duration(minutes: 1));
+
+  /// Projeto atual guardado (para conferir ajustes salvos).
+  DrawingProject? operator [](String id) => _projects[id];
+
+  @override
+  Future<DrawingProject> create({
+    required String originalName,
+    required Uint8List imageBytes,
+  }) async {
+    final now = _tick();
+    final project = DrawingProject(
+      id: 'p${_nextId++}',
+      originalName: originalName,
+      imageFileName: 'image.png',
+      thumbnailFileName: null,
+      createdAt: now,
+      updatedAt: now,
+    );
+    _projects[project.id] = project;
+    _images[project.id] = imageBytes;
+    return project;
+  }
+
+  @override
+  Future<List<DrawingProject>> listRecent() async =>
+      _projects.values.toList()
+        ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+
+  @override
+  Future<Uint8List> readImage(DrawingProject project) async {
+    final bytes = _images[project.id];
+    if (bytes == null) throw ProjectNotFoundException(project.id);
+    return bytes;
+  }
+
+  @override
+  File? thumbnailFile(DrawingProject project) => null;
+
+  @override
+  Future<DrawingProject> save(DrawingProject project) async {
+    if (!_projects.containsKey(project.id)) {
+      throw ProjectNotFoundException(project.id);
+    }
+    final updated = project.copyWith(updatedAt: _tick());
+    _projects[project.id] = updated;
+    saves.add(updated);
+    return updated;
+  }
+
+  @override
+  Future<void> delete(DrawingProject project) async {
+    _projects.remove(project.id);
+    _images.remove(project.id);
+    deleted.add(project.id);
+  }
+}
+
+/// Projeto de exemplo para testes.
+DrawingProject sampleProject({
+  String id = 'p1',
+  String name = 'ref.png',
+  DrawingSettings settings = const DrawingSettings(),
+  DateTime? updatedAt,
+}) {
+  final date = updatedAt ?? DateTime(2025, 1, 1, 10);
+  return DrawingProject(
+    id: id,
+    originalName: name,
+    imageFileName: 'image.png',
+    thumbnailFileName: null,
+    createdAt: date,
+    updatedAt: date,
+    settings: settings,
+  );
 }
 
 /// Wakelock falso: guarda se está ligado e quantas vezes foi chamado.

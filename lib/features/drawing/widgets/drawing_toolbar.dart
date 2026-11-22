@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../models/drawing_mode.dart';
+import '../models/drawing_settings.dart';
 import '../models/overlay_transform.dart';
 import '../services/camera_service.dart';
 
@@ -77,8 +78,9 @@ class _OpacitySlider extends StatelessWidget {
 
   final ValueNotifier<double> opacity;
 
-  static const min = 0.1;
-  static const max = 1.0;
+  // Os mesmos limites usados ao validar o JSON salvo (Fase 3).
+  static const min = DrawingSettings.minOpacity;
+  static const max = DrawingSettings.maxOpacity;
 
   @override
   Widget build(BuildContext context) {

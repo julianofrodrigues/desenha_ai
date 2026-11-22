@@ -151,9 +151,11 @@ de iniciante (faixa amarela e preta de *overflow*, "unbounded height") quase
 sempre vêm de quebrar essa regra, por exemplo um `Column` dentro de outro
 `Column` sem `Expanded`.
 
-No `desenha_ai` usamos `LayoutBuilder` para **ler essas restrições**: em
-`_LoadedView`, para decidir entre layout de tablet e de celular, e em
-`ImagePreview`, para decodificar a imagem no tamanho da área visível.
+No `desenha_ai`, a Fase 1 usava `LayoutBuilder` para **ler essas
+restrições** e decidir entre layout de tablet e de celular, e para
+decodificar a prévia no tamanho da área visível. Na Fase 3 a prévia virou o
+histórico; o mesmo cuidado com o tamanho de decodificação aparece em
+`ReferenceOverlay` (Fase 2) e nas miniaturas (`cacheWidth`, docs/04).
 
 ---
 
@@ -251,17 +253,23 @@ Organizamos **por funcionalidade** (feature), e dentro dela por camada:
 
 ```
 lib/
-├─ main.dart                     ← só liga o app
+├─ main.dart                     ← só liga o app (escolhe os serviços reais)
 ├─ app.dart                      ← MaterialApp, tema, tela inicial
 └─ features/
-   └─ image_selection/           ← Fase 1
-      ├─ data/
-      │  └─ local_image_source.dart   ← fala com o pacote file_picker
-      └─ presentation/
-         ├─ home_page.dart            ← tela + estados
-         └─ widgets/
-            └─ image_preview.dart     ← prévia com loading/erro
+   ├─ image_selection/           ← Fase 1
+   │  ├─ data/
+   │  │  └─ local_image_source.dart   ← fala com o pacote file_picker
+   │  └─ presentation/
+   │     └─ home_page.dart            ← Home: novo desenho + histórico
+   ├─ drawing/                   ← Fase 2 (docs/03)
+   │  ├─ models/ services/ widgets/ screens/
+   └─ projects/                  ← Fase 3 (docs/04)
+      ├─ models/ services/ widgets/
 ```
+
+> Na Fase 1 existia também `presentation/widgets/image_preview.dart` (prévia
+> com loading/erro). Ele foi removido na Fase 3, quando a prévia foi
+> substituída pelo histórico "Continuar desenhando".
 
 Por quê:
 

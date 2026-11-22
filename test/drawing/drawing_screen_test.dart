@@ -4,7 +4,10 @@ import 'package:desenha_ai/features/drawing/screens/drawing_screen.dart';
 import 'package:desenha_ai/features/drawing/services/camera_service.dart';
 import 'package:desenha_ai/features/drawing/widgets/lock_button.dart';
 import 'package:desenha_ai/features/drawing/widgets/reference_overlay.dart';
-import 'package:desenha_ai/features/image_selection/data/local_image_source.dart';
+import 'package:desenha_ai/features/drawing/models/drawing_mode.dart';
+import 'package:desenha_ai/features/drawing/models/drawing_settings.dart';
+import 'package:desenha_ai/features/drawing/models/overlay_transform.dart';
+import 'package:desenha_ai/features/projects/models/drawing_project.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -15,15 +18,22 @@ Future<FakeCameraService> _pumpScreen(
   CameraStatus Function()? onStart,
   bool torchSupported = false,
   FakeScreenWakeLock? wakeLock,
+  FakeProjectRepository? repository,
+  DrawingProject? project,
 }) async {
   final camera = FakeCameraService(
     onStart: onStart,
     torchSupported: torchSupported,
   );
+  final theProject = project ?? sampleProject();
+  final repo =
+      repository ?? FakeProjectRepository(initial: [theProject]);
   await tester.pumpWidget(
     MaterialApp(
       home: DrawingScreen(
-        image: PickedImage(name: 'ref.png', bytes: pngBytes),
+        project: theProject,
+        imageBytes: pngBytes,
+        projectRepository: repo,
         cameraServiceFactory: () => camera,
         screenWakeLock: wakeLock ?? FakeScreenWakeLock(),
       ),
@@ -50,6 +60,104 @@ void main() {
 
     await tester.pumpWidget(const SizedBox());
     expect(camera.disposed, isTrue);
+  });
+
+  group('retomada e salvamento automático (Fase 3)', () {
+    const saved = DrawingSettings(
+      transform: OverlayTransform(
+        offset: Offset(40, -30),
+        scale: 2,
+        rotation: 0.5,
+        flipped: true,
+      ),
+      opacity: 0.8,
+      mode: DrawingMode.lightTable,
+      lightTableColor: LightTableColor.black,
+    );
+
+    testWidgets('restaura exatamente os ajustes salvos', (tester) async {
+      final camera = await _pumpScreen(
+        tester,
+        project: sampleProject(settings: saved),
+      );
+
+      expect(_overlayMatrix(tester), saved.transform.toMatrix());
+      expect(tester.widget<Slider>(find.byType(Slider)).value, 0.8);
+      expect(find.text('80%'), findsOneWidget);
+      // Mesa de luz preta: o botão oferece voltar ao branco.
+      expect(find.byTooltip('Fundo branco'), findsOneWidget);
+      // Reabrir na Mesa de Luz não liga a câmera à toa.
+      expect(camera.startCalls, 0);
+    });
+
+    testWidgets('várias mudanças seguidas viram UMA gravação (debounce)',
+        (tester) async {
+      final project = sampleProject();
+      final repo = FakeProjectRepository(initial: [project]);
+      await _pumpScreen(tester, repository: repo, project: project);
+
+      // Três mudanças em sequência rápida.
+      await tester.tap(find.byTooltip('Espelhar imagem'));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.dragFrom(const Offset(100, 250), const Offset(80, 40));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.tap(find.text('Mesa de luz'));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // Ainda dentro do intervalo de debounce: nada gravado.
+      expect(repo.saves, isEmpty);
+
+      await tester.pump(DrawingScreen.autosaveDelay);
+      expect(repo.saves, hasLength(1));
+
+      final settings = repo[project.id]!.settings;
+      expect(settings.transform.flipped, isTrue);
+      expect(settings.transform.offset.dx, greaterThan(0));
+      expect(settings.mode, DrawingMode.lightTable);
+    });
+
+    testWidgets('sair da tela grava a mudança que ainda estava pendente',
+        (tester) async {
+      final project = sampleProject();
+      final repo = FakeProjectRepository(initial: [project]);
+      await _pumpScreen(tester, repository: repo, project: project);
+
+      await tester.tap(find.byTooltip('Espelhar imagem'));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(repo.saves, isEmpty);
+
+      await tester.pumpWidget(const SizedBox()); // dispose da tela
+      await tester.pump();
+      expect(repo.saves, hasLength(1));
+      expect(repo[project.id]!.settings.transform.flipped, isTrue);
+    });
+
+    testWidgets('minimizar o app grava na hora', (tester) async {
+      final project = sampleProject();
+      final repo = FakeProjectRepository(initial: [project]);
+      await _pumpScreen(tester, repository: repo, project: project);
+
+      await tester.tap(find.byTooltip('Resetar posição'));
+      await tester.tap(find.byTooltip('Espelhar imagem'));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      await tester.pump();
+      expect(repo.saves, hasLength(1));
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+    });
+
+    testWidgets('sem mudanças, nada é gravado', (tester) async {
+      final project = sampleProject();
+      final repo = FakeProjectRepository(initial: [project]);
+      await _pumpScreen(tester, repository: repo, project: project);
+
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pumpWidget(const SizedBox());
+      expect(repo.saves, isEmpty);
+    });
   });
 
   group('tela sempre acesa (wakelock)', () {

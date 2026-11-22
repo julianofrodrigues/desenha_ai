@@ -92,6 +92,46 @@ class OverlayTransform {
       ..scaleByDouble(flipped ? -scale : scale, scale, 1, 1);
   }
 
+  // -------------------------------------------------------------------------
+  // JSON (Fase 3)
+  // -------------------------------------------------------------------------
+  //
+  // Salvamos os COMPONENTES (posição, zoom, rotação, espelho), e não os 16
+  // números da Matrix4. Por quê?
+  // - A matriz é sempre recalculada a partir deles por `toMatrix()`, então
+  //   nada se perde.
+  // - Componentes são legíveis no arquivo e podem ser VALIDADOS ao carregar
+  //   (zoom dentro dos limites, ângulo normalizado). Uma matriz corrompida
+  //   poderia distorcer a imagem de formas que a UI nem consegue desfazer.
+  // - Extrair zoom/rotação de volta de uma matriz (decomposição) é sujeito a
+  //   erro de arredondamento e ambíguo quando há espelhamento.
+
+  Map<String, Object?> toJson() => {
+        'dx': offset.dx,
+        'dy': offset.dy,
+        'scale': scale,
+        'rotation': rotation,
+        'flipped': flipped,
+      };
+
+  /// Lê de JSON tolerando arquivos antigos ou corrompidos: campos ausentes
+  /// ou inválidos voltam ao padrão, e valores fora dos limites são ajustados.
+  factory OverlayTransform.fromJson(Map<String, Object?> json) {
+    double read(String key, double fallback) {
+      final value = json[key];
+      // `jsonDecode` devolve `int` para "1" e `double` para "1.5": aceitamos
+      // qualquer `num`. NaN/infinito nunca são válidos aqui.
+      return value is num && value.isFinite ? value.toDouble() : fallback;
+    }
+
+    return OverlayTransform(
+      offset: Offset(read('dx', 0), read('dy', 0)),
+      scale: read('scale', 1).clamp(minScale, maxScale),
+      rotation: _normalizeAngle(read('rotation', 0)),
+      flipped: json['flipped'] == true,
+    );
+  }
+
   /// Mantém o ângulo entre -π e π, para o número não crescer sem limite
   /// depois de muitas voltas (útil também ao salvar na Fase 3).
   static double _normalizeAngle(double radians) {

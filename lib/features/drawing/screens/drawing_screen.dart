@@ -1,10 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../../image_selection/data/local_image_source.dart';
+import '../../projects/models/drawing_project.dart';
+import '../../projects/services/project_repository.dart';
 import '../models/drawing_mode.dart';
+import '../models/drawing_settings.dart';
 import '../models/overlay_transform.dart';
 import '../services/camera_service.dart';
+import '../services/debounced_saver.dart';
 import '../services/screen_wake_lock.dart';
 import '../widgets/camera_layers.dart';
 import '../widgets/drawing_toolbar.dart';
@@ -27,16 +30,31 @@ typedef CameraServiceFactory = CameraService Function();
 class DrawingScreen extends StatefulWidget {
   const DrawingScreen({
     super.key,
-    required this.image,
+    required this.project,
+    required this.imageBytes,
+    required this.projectRepository,
     required this.cameraServiceFactory,
     required this.screenWakeLock,
   });
 
-  final PickedImage image;
+  /// Projeto do histórico. Os ajustes dele são o estado INICIAL da tela.
+  final DrawingProject project;
+
+  /// Bytes da cópia da imagem (já lidos pela Home).
+  final Uint8List imageBytes;
+
+  /// Onde os ajustes são salvos automaticamente.
+  final ProjectRepository projectRepository;
+
   final CameraServiceFactory cameraServiceFactory;
 
   /// Mantém a tela ligada enquanto esta tela estiver visível.
   final ScreenWakeLock screenWakeLock;
+
+  /// Espera depois da última mudança antes de gravar (ver [DebouncedSaver]).
+  /// 600 ms: curto o bastante para não perder nada se o app for fechado logo
+  /// depois, longo o bastante para um gesto inteiro virar UMA gravação.
+  static const autosaveDelay = Duration(milliseconds: 600);
 
   @override
   State<DrawingScreen> createState() => _DrawingScreenState();
@@ -48,13 +66,22 @@ class _DrawingScreenState extends State<DrawingScreen>
     with WidgetsBindingObserver {
   // Estado da tela em notifiers, e não em campos + `setState`.
   // Cada parte da UI escuta só o que precisa; ver docs/03.
-  final _transform = ValueNotifier(const OverlayTransform());
-  final _opacity = ValueNotifier(0.5); // 50%: dá para ver papel e referência
-  final _locked = ValueNotifier(false);
-  final _mode = ValueNotifier(DrawingMode.camera);
-  final _lightTableColor = ValueNotifier(LightTableColor.white);
+  // Os valores iniciais vêm do projeto salvo: é assim que a tela "volta de
+  // onde parou".
+  late final ValueNotifier<OverlayTransform> _transform;
+  late final ValueNotifier<double> _opacity;
+  late final ValueNotifier<DrawingMode> _mode;
+  late final ValueNotifier<LightTableColor> _lightTableColor;
+  final _locked = ValueNotifier(false); // nunca é salvo (ver DrawingSettings)
 
   late final CameraService _camera = widget.cameraServiceFactory();
+
+  /// Projeto mais recente (o `updatedAt` muda a cada gravação).
+  late DrawingProject _project = widget.project;
+
+  /// Junta os 4 notifiers salvos num só, para ouvir "qualquer ajuste mudou".
+  late final Listenable _persistedSettings;
+  late final DebouncedSaver<DrawingSettings> _autosaver;
 
   /// A câmera foi desligada porque o app saiu da tela (e não porque o
   /// usuário escolheu a Mesa de Luz)? Se sim, religamos ao voltar.
@@ -63,12 +90,40 @@ class _DrawingScreenState extends State<DrawingScreen>
   @override
   void initState() {
     super.initState();
+    final settings = widget.project.settings;
+    _transform = ValueNotifier(settings.transform);
+    _opacity = ValueNotifier(settings.opacity);
+    _mode = ValueNotifier(settings.mode);
+    _lightTableColor = ValueNotifier(settings.lightTableColor);
+
+    _autosaver = DebouncedSaver(
+      delay: DrawingScreen.autosaveDelay,
+      snapshot: _currentSettings,
+      write: _persist,
+    );
+    _persistedSettings =
+        Listenable.merge([_transform, _opacity, _mode, _lightTableColor])
+          ..addListener(_autosaver.schedule);
+
     WidgetsBinding.instance.addObserver(this);
     _mode.addListener(_onModeChanged);
-    _camera.start();
+    // Reabrindo um desenho feito na Mesa de Luz: não liga a câmera à toa.
+    if (_mode.value == DrawingMode.camera) _camera.start();
     // Nos dois modos: na Câmera AR ninguém toca na tela enquanto desenha, e
     // na Mesa de Luz a tela É a fonte de luz.
     widget.screenWakeLock.enable();
+  }
+
+  DrawingSettings _currentSettings() => DrawingSettings(
+        transform: _transform.value,
+        opacity: _opacity.value,
+        mode: _mode.value,
+        lightTableColor: _lightTableColor.value,
+      );
+
+  Future<void> _persist(DrawingSettings settings) async {
+    _project = await widget.projectRepository
+        .save(_project.copyWith(settings: settings));
   }
 
   @override
@@ -77,6 +132,11 @@ class _DrawingScreenState extends State<DrawingScreen>
     // Assim nenhum callback chega a um objeto já descartado.
     WidgetsBinding.instance.removeObserver(this);
     _mode.removeListener(_onModeChanged);
+    _persistedSettings.removeListener(_autosaver.schedule);
+    // Saindo da tela com uma mudança ainda "esperando o debounce": grava
+    // agora. O snapshot é tirado AQUI, de forma síncrona, antes de os
+    // notifiers serem descartados logo abaixo.
+    _autosaver.dispose();
     // Ao sair da tela de desenho (voltar para a Home), a tela do aparelho
     // deve voltar a apagar normalmente. Esquecer isto deixaria a tela acesa
     // na Home para sempre, drenando a bateria.
@@ -104,6 +164,9 @@ class _DrawingScreenState extends State<DrawingScreen>
         // explicitamente: o estado fica previsível e não depende desse
         // detalhe da plataforma.
         widget.screenWakeLock.disable();
+        // Em segundo plano o Android pode matar o app sem aviso (comum no
+        // Tab A, com pouca RAM). Gravamos o que estiver pendente agora.
+        _autosaver.flush();
         if (_mode.value == DrawingMode.camera) {
           final status = _camera.status.value;
           // Só religamos depois se estava funcionando. Se a permissão tinha
@@ -164,7 +227,7 @@ class _DrawingScreenState extends State<DrawingScreen>
           camera: _camera,
         ),
         ReferenceOverlay(
-          bytes: widget.image.bytes,
+          bytes: widget.imageBytes,
           transform: _transform,
           opacity: _opacity,
         ),
