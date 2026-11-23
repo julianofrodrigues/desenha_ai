@@ -142,6 +142,24 @@ class FakeProjectRepository implements ProjectRepository {
     return updated;
   }
 
+  /// Nomes pedidos em cada `rename`, na ordem (para os testes conferirem).
+  final renames = <String?>[];
+
+  @override
+  Future<DrawingProject> rename(
+    DrawingProject project,
+    String? customName,
+  ) async {
+    final current = _projects[project.id];
+    if (current == null) throw ProjectNotFoundException(project.id);
+    renames.add(customName);
+    // Como o repositório real: parte do estado guardado e não muda o
+    // "último acesso".
+    final renamed = current.rename(customName);
+    _projects[project.id] = renamed;
+    return renamed;
+  }
+
   @override
   Future<void> delete(DrawingProject project) async {
     _projects.remove(project.id);
@@ -154,6 +172,7 @@ class FakeProjectRepository implements ProjectRepository {
 DrawingProject sampleProject({
   String id = 'p1',
   String name = 'ref.png',
+  String? customName,
   DrawingSettings settings = const DrawingSettings(),
   DateTime? updatedAt,
 }) {
@@ -161,6 +180,7 @@ DrawingProject sampleProject({
   return DrawingProject(
     id: id,
     originalName: name,
+    customName: customName,
     imageFileName: 'image.png',
     thumbnailFileName: null,
     createdAt: date,

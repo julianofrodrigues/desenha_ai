@@ -162,6 +162,63 @@ void main() {
     });
   });
 
+  group('renomeação (Fase 4)', () {
+    test('grava o nome no JSON sem mudar arquivos nem o último acesso',
+        () async {
+      final repo = repository();
+      final p = await repo.create(originalName: 'gato.jpg', imageBytes: image);
+
+      final renamed = await repo.rename(p, '  Gato azul ');
+      expect(renamed.customName, 'Gato azul');
+      expect(renamed.updatedAt, p.updatedAt);
+
+      // Um repositório NOVO (app reaberto) lê o nome do disco.
+      final reloaded = (await repository().listRecent()).single;
+      expect(reloaded.displayName, 'Gato azul');
+      expect(reloaded.originalName, 'gato.jpg');
+      expect(reloaded.updatedAt, p.updatedAt);
+      // A cópia da imagem continua igual e no mesmo arquivo.
+      expect(reloaded.imageFileName, p.imageFileName);
+      expect(await repo.readImage(reloaded), image);
+    });
+
+    test('nome vazio volta ao nome original', () async {
+      final repo = repository();
+      final p = await repo.create(originalName: 'gato.jpg', imageBytes: image);
+      await repo.rename(p, 'Gato azul');
+
+      final cleared = await repo.rename(p, '   ');
+      expect(cleared.customName, isNull);
+      expect((await repo.listRecent()).single.displayName, 'gato.jpg');
+    });
+
+    test('não perde ajustes salvos depois de a lista ser lida', () async {
+      final repo = repository();
+      final stale = await repo.create(originalName: 'a.png', imageBytes: image);
+      // O salvamento automático grava ajustes novos...
+      await repo.save(
+        stale.copyWith(settings: const DrawingSettings(opacity: 0.9)),
+      );
+      // ...e a Home renomeia usando o objeto ANTIGO da lista.
+      final renamed = await repo.rename(stale, 'Novo nome');
+
+      expect(renamed.settings.opacity, 0.9);
+      expect((await repo.listRecent()).single.settings.opacity, 0.9);
+    });
+
+    test('renomear um projeto excluído falha sem recriá-lo', () async {
+      final repo = repository();
+      final p = await repo.create(originalName: 'a.png', imageBytes: image);
+      await repo.delete(p);
+
+      await expectLater(
+        repo.rename(p, 'x'),
+        throwsA(isA<ProjectNotFoundException>()),
+      );
+      expect(await Directory('${root.path}/${p.id}').exists(), isFalse);
+    });
+  });
+
   group('exclusão', () {
     test('remove registro, imagem e miniatura (a pasta inteira)', () async {
       final repo = repository();

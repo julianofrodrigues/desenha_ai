@@ -36,6 +36,16 @@ abstract interface class ProjectRepository {
 
   /// Remove o projeto: registro, cópia da imagem e miniatura.
   Future<void> delete(DrawingProject project);
+
+  /// Muda o nome exibido do projeto, SÓ dentro do app (Fase 4). `null`,
+  /// vazio ou só espaços voltam ao nome original (ver
+  /// [DrawingProject.rename]).
+  ///
+  /// Não altera o "último acesso": renomear não é continuar desenhando, então
+  /// o item não deve pular para o topo da lista. Também não mexe em nenhum
+  /// arquivo de imagem. Devolve o projeto atualizado. Lança
+  /// [ProjectNotFoundException] se o projeto foi excluído.
+  Future<DrawingProject> rename(DrawingProject project, String? customName);
 }
 
 /// O projeto pedido não existe (foi excluído ou os arquivos sumiram).

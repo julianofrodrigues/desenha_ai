@@ -11,12 +11,14 @@ class ProjectHistoryTile extends StatelessWidget {
     required this.project,
     required this.thumbnail,
     required this.onOpen,
+    required this.onRename,
     required this.onDelete,
   });
 
   final DrawingProject project;
   final File? thumbnail;
   final VoidCallback onOpen;
+  final VoidCallback onRename;
   final VoidCallback onDelete;
 
   /// Lado da miniatura em dp. Toque confortável e pouca memória.
@@ -32,16 +34,30 @@ class ProjectHistoryTile extends StatelessWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         leading: _Thumbnail(file: thumbnail),
+        // `displayName`: nome customizado > nome original > padrão (Fase 4).
         title: Text(
-          project.originalName,
+          project.displayName,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
         subtitle: Text(subtitle),
-        trailing: IconButton(
-          tooltip: 'Excluir desenho',
-          onPressed: onDelete,
-          icon: const Icon(Icons.delete_outline),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Editar fica à ESQUERDA do excluir: a ação comum e reversível
+            // vem primeiro, e a destrutiva fica na ponta, mais longe do
+            // texto que o usuário está lendo.
+            IconButton(
+              tooltip: 'Renomear desenho',
+              onPressed: onRename,
+              icon: const Icon(Icons.edit_outlined),
+            ),
+            IconButton(
+              tooltip: 'Excluir desenho',
+              onPressed: onDelete,
+              icon: const Icon(Icons.delete_outline),
+            ),
+          ],
         ),
         onTap: onOpen,
       ),

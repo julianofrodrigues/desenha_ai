@@ -6,8 +6,10 @@ import '../../drawing/screens/drawing_screen.dart';
 import '../../drawing/services/screen_wake_lock.dart';
 import '../../projects/models/drawing_project.dart';
 import '../../projects/services/project_repository.dart';
-import '../../projects/widgets/project_history_tile.dart';
+import '../../projects/widgets/project_history_list.dart';
+import '../../projects/widgets/rename_project_dialog.dart';
 import '../data/local_image_source.dart';
+import 'widgets/home_status_views.dart';
 
 // ---------------------------------------------------------------------------
 // Estados da tela
@@ -84,10 +86,24 @@ class _HomePageState extends State<HomePage> {
 
   ProjectRepository get _repository => widget.projectRepository;
 
+  // Barra de pesquisa (Fase 4). Ficam AQUI, e não no widget da lista,
+  // porque a lista some e volta quando a Home troca de estado (ex.:
+  // "Abrindo desenho…"). Aqui o texto pesquisado sobrevive a isso.
+  // Quem cria, descarta: os dois são liberados no `dispose` abaixo.
+  final _searchController = TextEditingController();
+  final _searchFocusNode = FocusNode();
+
   @override
   void initState() {
     super.initState();
     _loadHistory();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
   }
 
   Future<void> _loadHistory() async {
@@ -101,6 +117,10 @@ class _HomePageState extends State<HomePage> {
       projects = const [];
     }
     if (!mounted) return;
+    // Histórico vazio = a barra de pesquisa some (tela de boas-vindas).
+    // Limpamos o texto para que o próximo desenho não apareça "filtrado"
+    // por uma busca que o usuário nem está vendo.
+    if (projects.isEmpty) _searchController.clear();
     setState(() => _projects = projects);
   }
 
@@ -192,13 +212,53 @@ class _HomePageState extends State<HomePage> {
     await _loadHistory();
   }
 
+  /// Renomear só dentro do app (Fase 4).
+  Future<void> _rename(DrawingProject project) async {
+    // Fecha o teclado da busca antes de abrir o diálogo, que tem o seu
+    // próprio campo de texto.
+    _searchFocusNode.unfocus();
+    final name = await showRenameProjectDialog(context, project);
+    if (name == null || !mounted) return; // cancelou: nada muda
+
+    // Mesmo nome de antes: não grava nem mostra mensagem.
+    final normalized = DrawingProject.normalizeCustomName(
+      name,
+      originalName: project.originalName,
+    );
+    if (normalized == project.customName) return;
+
+    try {
+      final renamed = await _repository.rename(project, name);
+      if (!mounted) return;
+      // Atualiza a lista NA HORA, trocando só o item renomeado. Não
+      // precisamos reler o disco: a ordem não muda, porque renomear não
+      // altera o "último acesso".
+      setState(() {
+        _projects = [
+          for (final p in _projects ?? const <DrawingProject>[])
+            p.id == renamed.id ? renamed : p,
+        ];
+      });
+      _showMessage(
+        renamed.customName == null
+            ? 'Nome original restaurado.'
+            : 'Desenho renomeado.',
+      );
+    } catch (error) {
+      debugPrint('Falha ao renomear ${project.id}: $error');
+      _showMessage('Não foi possível renomear o desenho.');
+      await _loadHistory();
+    }
+  }
+
   Future<void> _confirmDelete(DrawingProject project) async {
+    _searchFocusNode.unfocus();
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Excluir desenho?'),
         content: Text(
-          '"${project.originalName}" e os ajustes salvos serão apagados do '
+          '"${project.displayName}" e os ajustes salvos serão apagados do '
           'app. A imagem original na galeria não é afetada.',
         ),
         actions: [
@@ -253,229 +313,27 @@ class _HomePageState extends State<HomePage> {
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 200),
           child: switch (_state) {
-            _Busy(:final message) => _LoadingView(message: message),
-            _Failed(:final message) => _ErrorView(
+            _Busy(:final message) => HomeLoadingView(message: message),
+            _Failed(:final message) => HomeErrorView(
                 message: message,
                 onRetry: _startNewDrawing,
               ),
             // Primeiro uso (ou histórico vazio): a tela de boas-vindas
-            // grande, com uma única ação.
-            _Idle() when !hasHistory => _EmptyView(onPick: _startNewDrawing),
-            _Idle() => _HistoryView(
+            // grande, com uma única ação. A busca só aparece quando há o
+            // que buscar.
+            _Idle() when !hasHistory =>
+              HomeWelcomeView(onPick: _startNewDrawing),
+            _Idle() => ProjectHistoryList(
                 projects: projects!,
                 repository: _repository,
+                searchController: _searchController,
+                searchFocusNode: _searchFocusNode,
                 onNewDrawing: _startNewDrawing,
                 onOpen: _resume,
+                onRename: _rename,
                 onDelete: _confirmDelete,
               ),
           },
-        ),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Partes da tela
-// ---------------------------------------------------------------------------
-//
-// Cada estado tem seu próprio widget pequeno. Isso deixa o `build` principal
-// legível (só o switch) e permite ao Flutter reconstruir só a parte que mudou.
-
-/// Layout centralizado com largura máxima, reaproveitado pelos estados
-/// vazio/carregando/erro. Num tablet deitado, um texto esticado na largura
-/// toda fica difícil de ler. 480 dp é uma largura confortável.
-class _CenteredMessage extends StatelessWidget {
-  const _CenteredMessage({required this.children});
-
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      // `SingleChildScrollView` evita "overflow" (faixa amarela e preta) em
-      // celulares deitados, onde a altura é pequena.
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: children,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _EmptyView extends StatelessWidget {
-  const _EmptyView({required this.onPick});
-
-  final VoidCallback onPick;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return _CenteredMessage(
-      children: [
-        Icon(
-          Icons.draw_outlined,
-          size: 96,
-          color: theme.colorScheme.primary,
-        ),
-        const SizedBox(height: 24),
-        Text(
-          'Escolha uma imagem de referência',
-          style: theme.textTheme.headlineSmall,
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Use uma foto ou desenho salvo no aparelho. '
-          'Nada é enviado para a internet.',
-          style: theme.textTheme.bodyLarge,
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 32),
-        // Um único botão principal e grande: nesta tela só existe uma ação
-        // possível, então não há o que o usuário precise decidir.
-        FilledButton.icon(
-          onPressed: onPick,
-          icon: const Icon(Icons.photo_library_outlined),
-          label: const Text('Escolher imagem'),
-          style: FilledButton.styleFrom(
-            minimumSize: const Size(220, 56),
-            textStyle: theme.textTheme.titleMedium,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _LoadingView extends StatelessWidget {
-  const _LoadingView({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return _CenteredMessage(
-      children: [
-        const CircularProgressIndicator(),
-        const SizedBox(height: 16),
-        Text(message),
-      ],
-    );
-  }
-}
-
-class _ErrorView extends StatelessWidget {
-  const _ErrorView({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return _CenteredMessage(
-      children: [
-        Icon(Icons.error_outline, size: 72, color: theme.colorScheme.error),
-        const SizedBox(height: 16),
-        Text(
-          message,
-          style: theme.textTheme.bodyLarge,
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 24),
-        FilledButton.icon(
-          onPressed: onRetry,
-          icon: const Icon(Icons.refresh),
-          label: const Text('Tentar novamente'),
-        ),
-      ],
-    );
-  }
-}
-
-/// Botão de novo desenho + lista "Continuar desenhando".
-class _HistoryView extends StatelessWidget {
-  const _HistoryView({
-    required this.projects,
-    required this.repository,
-    required this.onNewDrawing,
-    required this.onOpen,
-    required this.onDelete,
-  });
-
-  final List<DrawingProject> projects;
-  final ProjectRepository repository;
-  final VoidCallback onNewDrawing;
-  final ValueChanged<DrawingProject> onOpen;
-  final ValueChanged<DrawingProject> onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Align(
-      alignment: Alignment.topCenter,
-      child: ConstrainedBox(
-        // Em tablet deitado, uma lista da largura toda fica esticada demais.
-        constraints: const BoxConstraints(maxWidth: 720),
-        // `CustomScrollView` + `SliverList.builder`: a lista é PREGUIÇOSA.
-        // Só os itens visíveis (e uma pequena margem) são construídos e
-        // têm a miniatura decodificada. Com 50 projetos, ainda são uns 8
-        // na memória de cada vez (docs/04).
-        child: CustomScrollView(
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              sliver: SliverToBoxAdapter(
-                child: FilledButton.icon(
-                  onPressed: onNewDrawing,
-                  icon: const Icon(Icons.add_photo_alternate_outlined),
-                  label: const Text('Novo desenho'),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(56),
-                    textStyle: theme.textTheme.titleMedium,
-                  ),
-                ),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-              sliver: SliverToBoxAdapter(
-                child: Text(
-                  'Continuar desenhando',
-                  style: theme.textTheme.titleLarge,
-                ),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
-              sliver: SliverList.builder(
-                itemCount: projects.length,
-                itemBuilder: (context, index) {
-                  final project = projects[index];
-                  return ProjectHistoryTile(
-                    // A key liga o widget ao PROJETO, e não à posição na
-                    // lista: ao excluir um item, os outros não "herdam" a
-                    // miniatura errada durante a reconstrução.
-                    key: ValueKey(project.id),
-                    project: project,
-                    thumbnail: repository.thumbnailFile(project),
-                    onOpen: () => onOpen(project),
-                    onDelete: () => onDelete(project),
-                  );
-                },
-              ),
-            ),
-          ],
         ),
       ),
     );

@@ -46,3 +46,7 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Histórico pessoal de pedidos feitos à IA (uso local, não versionar)
+/prompts/
+/.kiro/steering/historico-de-pedidos.md

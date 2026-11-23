@@ -115,12 +115,16 @@ Plugins com código nativo, permissões em tempo de execução, ciclo de vida
 
 ---
 
-## Fase 3 · Persistência local 🚧 (aguardando testes no aparelho)
+## Fase 3 · Persistência local ✅
 
-> Implementado: cópia da imagem, salvamento automático dos ajustes,
-> histórico "Continuar desenhando" e exclusão. Ainda **não** implementado:
-> progresso do traçado (marcar regiões / foto de progresso). Detalhes:
-> `docs/04-fase3-persistencia-offline.md`.
+> Concluída: cópia da imagem para o armazenamento interno, salvamento
+> automático dos ajustes, histórico "Continuar desenhando" e exclusão.
+> Detalhes: `docs/04-fase3-persistencia-offline.md`.
+>
+> ❌ **Cancelado:** salvar o progresso do traçado ("até onde o traçado foi
+> feito"). O item continua listado abaixo só como registro do plano
+> original; ele **não será implementado**. O que a Fase 3 entregou não foi
+> alterado.
 
 **Entrega:** o app lembra do que o usuário estava fazendo, mesmo depois de
 fechado.
@@ -133,15 +137,15 @@ fechado.
   opacidade), para continuar exatamente onde parou.
 - **Cópia da imagem para o armazenamento do app**: se o original for
   apagado ou movido na galeria, o projeto continua funcionando.
-- **Progresso do traçado (se possível):**
-  - *Viável:* o usuário marca manualmente regiões já desenhadas (pinta
-    áreas por cima, como um marca-texto) e isso é salvo como uma camada.
-  - *Viável:* foto de progresso tirada pela própria câmera, salva no projeto
-    para comparar com a referência.
-  - *Experimental:* detectar automaticamente o que já foi desenhado no papel
-    comparando a câmera com a referência. Exige visão computacional
-    (OpenCV/TFLite offline) e é sensível a luz e ângulo. Fica como estudo
-    opcional, fora do escopo principal.
+- ~~**Progresso do traçado (se possível):**~~ ❌ **CANCELADO** (decisão
+  tomada antes da Fase 4; não será feito). Opções que tinham sido
+  consideradas, mantidas só como registro:
+  - ~~*Viável:* o usuário marca manualmente regiões já desenhadas (pinta
+    áreas por cima, como um marca-texto) e isso é salvo como uma camada.~~
+  - ~~*Viável:* foto de progresso tirada pela própria câmera, salva no
+    projeto para comparar com a referência.~~
+  - ~~*Experimental:* detectar automaticamente o que já foi desenhado no
+    papel comparando a câmera com a referência (OpenCV/TFLite offline).~~
 - Excluir projetos e liberar espaço.
 
 ### Decisões técnicas previstas
@@ -163,10 +167,48 @@ unidade da camada de dados.
 
 ---
 
+## Fase 4 · Renomeação e busca no histórico 🚧 (aguardando testes no aparelho)
+
+**Entrega:** melhorias sobre a base da Fase 3, sem descartar nada do que já
+existia. Detalhes: `docs/05-fase4-renomeacao-e-busca.md`.
+
+### Funcionalidades
+
+- **Renomear só dentro do app:** botão Editar (lápis) à esquerda do botão
+  Remover em cada item do histórico. Abre um diálogo; o nome fica salvo no
+  `project.json`. O arquivo original na galeria e os arquivos copiados na
+  Fase 3 não mudam. Campo vazio ou só com espaços volta ao nome original;
+  Cancelar mantém o nome anterior.
+- **Barra de pesquisa** no topo da seção "Continuar desenhando": filtra em
+  tempo real, sem diferenciar maiúsculas e acentos, com botão de limpar.
+- **Prioridade de nomes** (exibição e busca):
+  1. nome customizado no app;
+  2. nome original do arquivo;
+  3. nome padrão "Imagem" (o mesmo fallback que a Fase 3 já usava).
+
+### Decisões técnicas
+
+| Decisão | Motivo |
+| --- | --- |
+| Campo opcional `customName` no JSON, sem mudar `schemaVersion` | Arquivos da Fase 3 continuam válidos sem migração. |
+| `displayName` no modelo | Lista, busca e diálogo de exclusão usam a mesma regra de prioridade. |
+| `rename` no repositório relê o JSON do disco | Não sobrescreve ajustes salvos pelo salvamento automático depois de a lista ser lida. |
+| Renomear não muda o "último acesso" | Renomear não é continuar desenhando; o item não pula para o topo. |
+| Busca como função pura, sem debounce | Filtrar dezenas de itens leva microssegundos; dá para testar sem tela. |
+| `TextEditingController` + `FocusNode` na Home, descartados no `dispose` | O texto pesquisado sobrevive às trocas de estado da Home. |
+
+### Novos conceitos de Flutter
+
+`TextEditingController` e `FocusNode` (ciclo de vida), `TextEditingController`
+como `ValueListenable`, `showDialog` devolvendo um valor, compatibilidade de
+formato de arquivo entre versões.
+
+---
+
 ## Fora do escopo (por enquanto)
 
 - Qualquer recurso que precise de internet (nuvem, contas, compartilhamento
   online).
 - iOS, web e desktop. O código Flutter é portável, mas só testaremos Android.
-- Edição da imagem (filtros, recorte). Pode virar uma Fase 4, se fizer
-  sentido.
+- Edição da imagem (filtros, recorte).
+- ❌ Salvar o progresso do traçado: **cancelado** (ver Fase 3).

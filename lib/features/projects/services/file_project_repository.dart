@@ -166,6 +166,29 @@ class FileProjectRepository implements ProjectRepository {
   }
 
   @override
+  Future<DrawingProject> rename(DrawingProject project, String? customName) {
+    return _serialized(() async {
+      final dir = _projectDir(project.id);
+      final file = _file(dir, _projectFile);
+      if (!await file.exists()) throw ProjectNotFoundException(project.id);
+
+      // Partimos do que está no DISCO, e não do objeto recebido. A lista da
+      // Home pode estar um pouco desatualizada (ex.: o salvamento automático
+      // da tela de desenho terminou depois de a lista ser lida). Se
+      // gravássemos o objeto da lista, os ajustes mais novos seriam perdidos.
+      final json = jsonDecode(await file.readAsString());
+      final current = DrawingProject.fromJson(json as Map<String, Object?>);
+
+      final renamed = current.rename(customName);
+      // Nada mudou (mesmo nome): evita uma gravação inútil na memória flash.
+      if (renamed.customName != current.customName) {
+        await _writeProject(dir, renamed);
+      }
+      return renamed;
+    });
+  }
+
+  @override
   Future<void> delete(DrawingProject project) {
     return _serialized(() async {
       final dir = _projectDir(project.id);

@@ -13,6 +13,8 @@ import 'package:desenha_ai/features/drawing/models/overlay_transform.dart';
 import 'package:desenha_ai/features/drawing/screens/drawing_screen.dart';
 import 'package:desenha_ai/features/image_selection/data/local_image_source.dart';
 import 'package:desenha_ai/features/projects/widgets/project_history_tile.dart';
+import 'package:desenha_ai/features/projects/widgets/project_search_field.dart';
+import 'package:desenha_ai/features/projects/widgets/rename_project_dialog.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -225,6 +227,18 @@ void main() {
       expect(find.text('Desenho excluído.'), findsOneWidget);
     });
 
+    testWidgets('mostra o nome customizado no lugar do nome do arquivo',
+        (tester) async {
+      final repo = FakeProjectRepository(initial: [
+        sampleProject(name: 'IMG_2025.jpg', customName: 'Gato azul'),
+      ]);
+      await tester.pumpWidget(_app(_picks('x.png'), repository: repo));
+      await tester.pump();
+
+      expect(find.text('Gato azul'), findsOneWidget);
+      expect(find.text('IMG_2025.jpg'), findsNothing);
+    });
+
     testWidgets('excluir o último projeto volta à tela de boas-vindas',
         (tester) async {
       final repo = FakeProjectRepository(initial: [sampleProject()]);
@@ -237,6 +251,252 @@ void main() {
       await settle(tester);
 
       expect(find.text('Escolha uma imagem de referência'), findsOneWidget);
+    });
+  });
+
+  group('renomear (Fase 4)', () {
+    Future<FakeProjectRepository> pumpWithOne(
+      WidgetTester tester, {
+      String? customName,
+    }) async {
+      final repo = FakeProjectRepository(
+        initial: [sampleProject(name: 'gato.jpg', customName: customName)],
+      );
+      await tester.pumpWidget(_app(_picks('x.png'), repository: repo));
+      await tester.pump();
+      return repo;
+    }
+
+    /// Campo de texto DENTRO do diálogo (a Home também tem o da busca).
+    Finder dialogField() => find.descendant(
+          of: find.byType(RenameProjectDialog),
+          matching: find.byType(TextField),
+        );
+
+    testWidgets('o botão Editar fica à esquerda do botão Remover',
+        (tester) async {
+      await pumpWithOne(tester);
+
+      final edit = tester.getCenter(find.byTooltip('Renomear desenho'));
+      final delete = tester.getCenter(find.byTooltip('Excluir desenho'));
+      expect(edit.dx, lessThan(delete.dx));
+      expect(edit.dy, closeTo(delete.dy, 1)); // mesma linha
+    });
+
+    testWidgets('salvar grava o novo nome e atualiza a lista na hora',
+        (tester) async {
+      final repo = await pumpWithOne(tester);
+
+      await tester.tap(find.byTooltip('Renomear desenho'));
+      await settle(tester);
+      // O campo começa com o nome atual.
+      expect(
+        tester.widget<TextField>(dialogField()).controller!.text,
+        'gato.jpg',
+      );
+
+      await tester.enterText(dialogField(), '  Gato azul  ');
+      await tester.tap(find.text('Salvar'));
+      await settle(tester);
+
+      expect(find.text('Gato azul'), findsOneWidget);
+      expect(find.text('gato.jpg'), findsNothing);
+      expect(find.text('Desenho renomeado.'), findsOneWidget);
+      // Persistiu no repositório, sem alterar o nome original.
+      final saved = repo['p1']!;
+      expect(saved.customName, 'Gato azul');
+      expect(saved.originalName, 'gato.jpg');
+    });
+
+    testWidgets('confirmar pelo teclado ("concluído") também salva',
+        (tester) async {
+      final repo = await pumpWithOne(tester);
+      await tester.tap(find.byTooltip('Renomear desenho'));
+      await settle(tester);
+
+      await tester.enterText(dialogField(), 'Pelo teclado');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await settle(tester);
+
+      expect(repo['p1']!.customName, 'Pelo teclado');
+    });
+
+    testWidgets('cancelar mantém o nome anterior', (tester) async {
+      final repo = await pumpWithOne(tester, customName: 'Antigo');
+      await tester.tap(find.byTooltip('Renomear desenho'));
+      await settle(tester);
+
+      await tester.enterText(dialogField(), 'Não deve salvar');
+      await tester.tap(find.text('Cancelar'));
+      await settle(tester);
+
+      expect(find.text('Antigo'), findsOneWidget);
+      expect(repo.renames, isEmpty);
+    });
+
+    testWidgets('campo vazio ou só espaços volta ao nome original',
+        (tester) async {
+      final repo = await pumpWithOne(tester, customName: 'Gato azul');
+      await tester.tap(find.byTooltip('Renomear desenho'));
+      await settle(tester);
+
+      await tester.enterText(dialogField(), '    ');
+      await tester.tap(find.text('Salvar'));
+      await settle(tester);
+
+      expect(find.text('gato.jpg'), findsOneWidget);
+      expect(find.text('Nome original restaurado.'), findsOneWidget);
+      expect(repo['p1']!.customName, isNull);
+    });
+
+    testWidgets('salvar o mesmo nome não grava nada', (tester) async {
+      final repo = await pumpWithOne(tester, customName: 'Gato azul');
+      await tester.tap(find.byTooltip('Renomear desenho'));
+      await settle(tester);
+
+      await tester.tap(find.text('Salvar')); // texto inalterado
+      await settle(tester);
+
+      expect(repo.renames, isEmpty);
+    });
+
+    testWidgets('renomear não muda a ordem do histórico', (tester) async {
+      final repo = FakeProjectRepository(initial: [
+        sampleProject(id: 'a', name: 'antigo.png', updatedAt: DateTime(2025)),
+        sampleProject(id: 'b', name: 'novo.png', updatedAt: DateTime(2026)),
+      ]);
+      await tester.pumpWidget(_app(_picks('x.png'), repository: repo));
+      await tester.pump();
+
+      // Renomeia o item de BAIXO (o mais antigo).
+      await tester.tap(find.byTooltip('Renomear desenho').last);
+      await settle(tester);
+      await tester.enterText(dialogField(), 'Renomeado');
+      await tester.tap(find.text('Salvar'));
+      await settle(tester);
+
+      final names = tester
+          .widgetList<ProjectHistoryTile>(find.byType(ProjectHistoryTile))
+          .map((t) => t.project.displayName)
+          .toList();
+      expect(names, ['novo.png', 'Renomeado']);
+    });
+  });
+
+  group('barra de pesquisa (Fase 4)', () {
+    // Pelo widget da barra (e não pelo texto de dica, que some ao digitar).
+    Finder searchField() => find.descendant(
+          of: find.byType(ProjectSearchField),
+          matching: find.byType(TextField),
+        );
+
+    List<String> visibleNames(WidgetTester tester) => tester
+        .widgetList<ProjectHistoryTile>(find.byType(ProjectHistoryTile))
+        .map((t) => t.project.displayName)
+        .toList();
+
+    Future<void> pumpHistory(WidgetTester tester) async {
+      final repo = FakeProjectRepository(initial: [
+        sampleProject(
+          id: 'a',
+          name: 'IMG_001.jpg',
+          customName: 'Pássaro azul',
+          updatedAt: DateTime(2025, 3),
+        ),
+        sampleProject(id: 'b', name: 'gato.png', updatedAt: DateTime(2025, 2)),
+        sampleProject(id: 'c', name: '', updatedAt: DateTime(2025, 1)),
+      ]);
+      await tester.pumpWidget(_app(_picks('x.png'), repository: repo));
+      await tester.pump();
+    }
+
+    testWidgets('filtra em tempo real, sem acento e sem maiúsculas',
+        (tester) async {
+      await pumpHistory(tester);
+      expect(visibleNames(tester), ['Pássaro azul', 'gato.png', 'Imagem']);
+
+      await tester.enterText(searchField(), 'PASSARO');
+      await tester.pump();
+      expect(visibleNames(tester), ['Pássaro azul']);
+
+      await tester.enterText(searchField(), 'gat');
+      await tester.pump();
+      expect(visibleNames(tester), ['gato.png']);
+    });
+
+    testWidgets('busca segue a prioridade de nomes', (tester) async {
+      await pumpHistory(tester);
+
+      // O nome original de um item renomeado não é usado.
+      await tester.enterText(searchField(), 'IMG_001');
+      await tester.pump();
+      expect(visibleNames(tester), isEmpty);
+      expect(
+        find.text('Nenhum desenho encontrado para “IMG_001”.'),
+        findsOneWidget,
+      );
+
+      // Sem nome nenhum, o item é encontrado pelo nome padrão.
+      await tester.enterText(searchField(), 'imagem');
+      await tester.pump();
+      expect(visibleNames(tester), ['Imagem']);
+    });
+
+    testWidgets('botão de limpar só aparece com texto e limpa a busca',
+        (tester) async {
+      await pumpHistory(tester);
+      expect(find.byTooltip('Limpar pesquisa'), findsNothing);
+
+      await tester.enterText(searchField(), 'gato');
+      await tester.pump();
+      expect(find.byTooltip('Limpar pesquisa'), findsOneWidget);
+      expect(visibleNames(tester), hasLength(1));
+
+      await tester.tap(find.byTooltip('Limpar pesquisa'));
+      await tester.pump();
+
+      expect(find.byTooltip('Limpar pesquisa'), findsNothing);
+      expect(visibleNames(tester), hasLength(3));
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.controller!.text, isEmpty);
+    });
+
+    testWidgets('renomear um item faz a busca achar o nome novo',
+        (tester) async {
+      await pumpHistory(tester);
+      await tester.enterText(searchField(), 'cachorro');
+      await tester.pump();
+      expect(visibleNames(tester), isEmpty);
+
+      await tester.tap(find.byTooltip('Limpar pesquisa'));
+      await tester.pump();
+      await tester.tap(find.byTooltip('Renomear desenho').at(1)); // gato.png
+      await settle(tester);
+      await tester.enterText(
+        find.descendant(
+          of: find.byType(RenameProjectDialog),
+          matching: find.byType(TextField),
+        ),
+        'Cachorro',
+      );
+      await tester.tap(find.text('Salvar'));
+      await settle(tester);
+
+      await tester.enterText(searchField(), 'cachorro');
+      await tester.pump();
+      expect(visibleNames(tester), ['Cachorro']);
+    });
+
+    testWidgets('a Home descarta o controller e o foco sem erros',
+        (tester) async {
+      await pumpHistory(tester);
+      await tester.enterText(searchField(), 'gato');
+      await tester.pump();
+
+      // Remover a Home chama o `dispose`. Um controller/FocusNode usado
+      // depois de descartado geraria uma exceção aqui.
+      await tester.pumpWidget(const SizedBox());
+      expect(tester.takeException(), isNull);
     });
   });
 }

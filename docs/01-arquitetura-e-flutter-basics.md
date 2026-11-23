@@ -260,10 +260,11 @@ lib/
    │  ├─ data/
    │  │  └─ local_image_source.dart   ← fala com o pacote file_picker
    │  └─ presentation/
-   │     └─ home_page.dart            ← Home: novo desenho + histórico
+   │     ├─ home_page.dart            ← Home: novo desenho + histórico
+   │     └─ widgets/home_status_views.dart ← boas-vindas/carregando/erro
    ├─ drawing/                   ← Fase 2 (docs/03)
    │  ├─ models/ services/ widgets/ screens/
-   └─ projects/                  ← Fase 3 (docs/04)
+   └─ projects/                  ← Fases 3 e 4 (docs/04, docs/05)
       ├─ models/ services/ widgets/
 ```
 
