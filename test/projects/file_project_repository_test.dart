@@ -8,6 +8,7 @@ import 'dart:typed_data';
 import 'package:desenha_ai/features/drawing/models/drawing_mode.dart';
 import 'package:desenha_ai/features/drawing/models/drawing_settings.dart';
 import 'package:desenha_ai/features/drawing/models/overlay_transform.dart';
+import 'package:desenha_ai/features/projects/models/drawing_project.dart';
 import 'package:desenha_ai/features/projects/services/file_project_repository.dart';
 import 'package:desenha_ai/features/projects/services/project_repository.dart';
 import 'package:desenha_ai/features/projects/services/thumbnail_generator.dart';
@@ -24,6 +25,18 @@ class _FakeThumbnails implements ThumbnailGenerator {
     return Uint8List.fromList([1, 2, 3]);
   }
 }
+
+/// Renomear sem mexer na categoria (como na Fase 4).
+Future<DrawingProject> _rename(
+  FileProjectRepository repo,
+  DrawingProject project,
+  String? name,
+) =>
+    repo.updateDetails(
+      project,
+      customName: name,
+      categoryId: project.categoryId,
+    );
 
 void main() {
   late Directory temp;
@@ -168,7 +181,7 @@ void main() {
       final repo = repository();
       final p = await repo.create(originalName: 'gato.jpg', imageBytes: image);
 
-      final renamed = await repo.rename(p, '  Gato azul ');
+      final renamed = await _rename(repo, p, '  Gato azul ');
       expect(renamed.customName, 'Gato azul');
       expect(renamed.updatedAt, p.updatedAt);
 
@@ -185,9 +198,9 @@ void main() {
     test('nome vazio volta ao nome original', () async {
       final repo = repository();
       final p = await repo.create(originalName: 'gato.jpg', imageBytes: image);
-      await repo.rename(p, 'Gato azul');
+      await _rename(repo, p, 'Gato azul');
 
-      final cleared = await repo.rename(p, '   ');
+      final cleared = await _rename(repo, p, '   ');
       expect(cleared.customName, isNull);
       expect((await repo.listRecent()).single.displayName, 'gato.jpg');
     });
@@ -200,7 +213,7 @@ void main() {
         stale.copyWith(settings: const DrawingSettings(opacity: 0.9)),
       );
       // ...e a Home renomeia usando o objeto ANTIGO da lista.
-      final renamed = await repo.rename(stale, 'Novo nome');
+      final renamed = await _rename(repo, stale, 'Novo nome');
 
       expect(renamed.settings.opacity, 0.9);
       expect((await repo.listRecent()).single.settings.opacity, 0.9);
@@ -212,7 +225,7 @@ void main() {
       await repo.delete(p);
 
       await expectLater(
-        repo.rename(p, 'x'),
+        _rename(repo, p, 'x'),
         throwsA(isA<ProjectNotFoundException>()),
       );
       expect(await Directory('${root.path}/${p.id}').exists(), isFalse);

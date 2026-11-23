@@ -24,6 +24,12 @@ lib/features/image_selection/presentation/
 └─ widgets/home_status_views.dart ← boas-vindas/carregando/erro (saíram da Home)
 ```
 
+> **Atualização da Fase 5:** o `RenameProjectDialog` virou `EditProjectDialog`
+> (`edit_project_dialog.dart`), que também escolhe a categoria. O método
+> `ProjectRepository.rename` virou `updateDetails` (nome + categoria numa
+> gravação só). As regras de nome descritas aqui continuam iguais. Ver
+> `docs/06-fase5-categorias-e-filtros.md`.
+
 > **Registro:** a Fase 3 está concluída. O recurso de salvar "até onde o
 > traçado foi feito" foi **cancelado** e não será implementado (ver
 > `docs/02-roadmap-desenha-ai.md`).

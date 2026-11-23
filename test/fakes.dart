@@ -7,6 +7,9 @@ import 'package:desenha_ai/features/drawing/services/camera_service.dart';
 import 'package:desenha_ai/features/drawing/services/screen_wake_lock.dart';
 import 'package:desenha_ai/features/image_selection/data/local_image_source.dart';
 import 'package:desenha_ai/features/projects/models/drawing_project.dart';
+import 'package:desenha_ai/features/projects/models/project_category.dart';
+import 'package:desenha_ai/features/projects/models/project_search.dart';
+import 'package:desenha_ai/features/projects/services/category_repository.dart';
 import 'package:desenha_ai/features/projects/services/project_repository.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -142,22 +145,34 @@ class FakeProjectRepository implements ProjectRepository {
     return updated;
   }
 
-  /// Nomes pedidos em cada `rename`, na ordem (para os testes conferirem).
-  final renames = <String?>[];
+  /// Cada chamada a `updateDetails`, na ordem (para os testes conferirem).
+  final edits = <({String? customName, String? categoryId})>[];
 
   @override
-  Future<DrawingProject> rename(
-    DrawingProject project,
-    String? customName,
-  ) async {
+  Future<DrawingProject> updateDetails(
+    DrawingProject project, {
+    required String? customName,
+    required String? categoryId,
+  }) async {
     final current = _projects[project.id];
     if (current == null) throw ProjectNotFoundException(project.id);
-    renames.add(customName);
+    edits.add((customName: customName, categoryId: categoryId));
     // Como o repositório real: parte do estado guardado e não muda o
     // "último acesso".
-    final renamed = current.rename(customName);
-    _projects[project.id] = renamed;
-    return renamed;
+    final updated = current.rename(customName).withCategory(categoryId);
+    _projects[project.id] = updated;
+    return updated;
+  }
+
+  @override
+  Future<int> clearCategory(String categoryId) async {
+    var changed = 0;
+    for (final entry in _projects.entries.toList()) {
+      if (entry.value.categoryId != categoryId) continue;
+      _projects[entry.key] = entry.value.withCategory(null);
+      changed++;
+    }
+    return changed;
   }
 
   @override
@@ -168,11 +183,59 @@ class FakeProjectRepository implements ProjectRepository {
   }
 }
 
+/// Categorias em memória, com a MESMA validação do repositório real
+/// (`validateCategoryName`), para os testes de tela verem as mesmas regras.
+class FakeCategoryRepository implements CategoryRepository {
+  FakeCategoryRepository({List<ProjectCategory> initial = const []})
+      : _categories = [...initial];
+
+  final List<ProjectCategory> _categories;
+  final deleted = <String>[];
+  var _nextId = 0;
+
+  @override
+  Future<List<ProjectCategory>> listAll() async => [..._categories]
+    ..sort((a, b) => normalizeForSearch(a.name).compareTo(
+          normalizeForSearch(b.name),
+        ));
+
+  @override
+  Future<ProjectCategory> create({
+    required String name,
+    required int colorValue,
+  }) async {
+    final error = validateCategoryName(name, _categories);
+    if (error != null) throw CategoryValidationException(error);
+    final category = ProjectCategory(
+      id: 'c${_nextId++}',
+      name: name.trim(),
+      colorValue: colorValue,
+    );
+    _categories.add(category);
+    return category;
+  }
+
+  @override
+  Future<void> delete(ProjectCategory category) async {
+    _categories.removeWhere((c) => c.id == category.id);
+    deleted.add(category.id);
+  }
+}
+
+/// Categoria de exemplo para testes.
+ProjectCategory sampleCategory({
+  String id = 'c1',
+  String name = 'Animais',
+  int colorValue = 0xFF43A047,
+}) =>
+    ProjectCategory(id: id, name: name, colorValue: colorValue);
+
 /// Projeto de exemplo para testes.
 DrawingProject sampleProject({
   String id = 'p1',
   String name = 'ref.png',
   String? customName,
+  String? categoryId,
   DrawingSettings settings = const DrawingSettings(),
   DateTime? updatedAt,
 }) {
@@ -181,6 +244,7 @@ DrawingProject sampleProject({
     id: id,
     originalName: name,
     customName: customName,
+    categoryId: categoryId,
     imageFileName: 'image.png',
     thumbnailFileName: null,
     createdAt: date,

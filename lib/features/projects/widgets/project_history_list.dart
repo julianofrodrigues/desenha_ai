@@ -1,8 +1,11 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../models/category_filter.dart';
 import '../models/drawing_project.dart';
+import '../models/project_category.dart';
 import '../models/project_search.dart';
 import '../services/project_repository.dart';
+import 'category_filter_bar.dart';
 import 'project_history_tile.dart';
 import 'project_search_field.dart';
 
@@ -11,9 +14,9 @@ import 'project_search_field.dart';
 /// Saiu da `home_page.dart` na Fase 4 para a tela não passar do tamanho
 /// recomendado pelo steering (~300 linhas).
 ///
-/// Rebuilds: digitar na busca reconstrói SÓ a barra de pesquisa e a lista
-/// filtrada (os dois `ValueListenableBuilder` que escutam o
-/// [searchController]). O botão e o título não são reconstruídos.
+/// Rebuilds: digitar na busca ou mudar o filtro de categoria reconstrói SÓ
+/// a barra/faixa que mudou e a lista filtrada. O botão "Novo desenho" e o
+/// título não são reconstruídos.
 class ProjectHistoryList extends StatelessWidget {
   const ProjectHistoryList({
     super.key,
@@ -23,9 +26,18 @@ class ProjectHistoryList extends StatelessWidget {
     required this.searchFocusNode,
     required this.onNewDrawing,
     required this.onOpen,
-    required this.onRename,
+    required this.onEdit,
     required this.onDelete,
+    required this.categoryFilter,
+    required this.onOpenCategoryPicker,
+    this.categoriesById = const {},
   });
+
+  /// Filtro por categoria (Etapa 5B). Pertence à Home, que o descarta.
+  final ValueNotifier<CategoryFilter> categoryFilter;
+
+  /// Abre o seletor de categorias (pesquisar, criar, remover, marcar).
+  final VoidCallback onOpenCategoryPicker;
 
   final List<DrawingProject> projects;
   final ProjectRepository repository;
@@ -33,8 +45,12 @@ class ProjectHistoryList extends StatelessWidget {
   final FocusNode searchFocusNode;
   final VoidCallback onNewDrawing;
   final ValueChanged<DrawingProject> onOpen;
-  final ValueChanged<DrawingProject> onRename;
+  final ValueChanged<DrawingProject> onEdit;
   final ValueChanged<DrawingProject> onDelete;
+
+  /// Categorias por id (Fase 5). Um mapa, e não uma lista, porque cada card
+  /// procura a sua categoria: com o mapa, isso é instantâneo.
+  final Map<String, ProjectCategory> categoriesById;
 
   @override
   Widget build(BuildContext context) {
@@ -85,13 +101,40 @@ class ProjectHistoryList extends StatelessWidget {
                 ),
               ),
             ),
-            ValueListenableBuilder<TextEditingValue>(
-              valueListenable: searchController,
-              builder: (context, value, _) {
-                final visible = filterProjects(projects, value.text);
+            // Faixa de categorias logo abaixo da busca (Etapa 5B).
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              sliver: SliverToBoxAdapter(
+                child: CategoryFilterBar(
+                  filter: categoryFilter,
+                  categoriesById: categoriesById,
+                  onOpenPicker: onOpenCategoryPicker,
+                ),
+              ),
+            ),
+            // A lista escuta a busca E o filtro: muda quando qualquer um dos
+            // dois muda. `Listenable.merge` cria um objeto leve; ele é
+            // recriado só quando ESTE widget é reconstruído (ex.: a Home
+            // recarregou o histórico), e não a cada tecla.
+            ListenableBuilder(
+              listenable: Listenable.merge([searchController, categoryFilter]),
+              builder: (context, _) {
+                final query = searchController.text;
+                final filter = categoryFilter.value;
+                // Categorias primeiro, depois a busca por nome (só dentro
+                // das categorias marcadas).
+                final visible = applyHistoryFilters(
+                  projects,
+                  query: query,
+                  categoryFilter: filter,
+                  categoriesById: categoriesById,
+                );
                 if (visible.isEmpty) {
                   return SliverToBoxAdapter(
-                    child: _NoResults(query: value.text.trim()),
+                    child: _NoResults(
+                      query: query.trim(),
+                      filtered: filter.isActive,
+                    ),
                   );
                 }
                 return SliverPadding(
@@ -107,8 +150,10 @@ class ProjectHistoryList extends StatelessWidget {
                         key: ValueKey(project.id),
                         project: project,
                         thumbnail: repository.thumbnailFile(project),
+                        // `null` se não tem categoria OU se ela foi excluída.
+                        category: project.categoryIn(categoriesById),
                         onOpen: () => onOpen(project),
-                        onRename: () => onRename(project),
+                        onEdit: () => onEdit(project),
                         onDelete: () => onDelete(project),
                       );
                     },
@@ -124,16 +169,28 @@ class ProjectHistoryList extends StatelessWidget {
 }
 
 class _NoResults extends StatelessWidget {
-  const _NoResults({required this.query});
+  const _NoResults({required this.query, required this.filtered});
 
   final String query;
+
+  /// Há filtro de categoria ativo? Muda a mensagem, para o usuário entender
+  /// que a lista vazia vem do filtro (e não de não ter desenhos).
+  final bool filtered;
+
+  String get _message => switch ((query.isEmpty, filtered)) {
+        (true, true) => 'Nenhum desenho nas categorias selecionadas.',
+        (false, true) =>
+          'Nenhum desenho encontrado para “$query” nas categorias '
+              'selecionadas.',
+        _ => 'Nenhum desenho encontrado para “$query”.',
+      };
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(32),
       child: Text(
-        'Nenhum desenho encontrado para “$query”.',
+        _message,
         textAlign: TextAlign.center,
         style: Theme.of(context).textTheme.bodyLarge,
       ),

@@ -37,15 +37,30 @@ abstract interface class ProjectRepository {
   /// Remove o projeto: registro, cópia da imagem e miniatura.
   Future<void> delete(DrawingProject project);
 
-  /// Muda o nome exibido do projeto, SÓ dentro do app (Fase 4). `null`,
-  /// vazio ou só espaços voltam ao nome original (ver
-  /// [DrawingProject.rename]).
+  /// Grava o que o usuário muda no botão Editar: o nome dentro do app
+  /// (Fase 4) e a categoria (Fase 5), numa ÚNICA gravação.
   ///
-  /// Não altera o "último acesso": renomear não é continuar desenhando, então
+  /// - [customName]: `null`, vazio ou só espaços voltam ao nome original
+  ///   (ver [DrawingProject.rename]).
+  /// - [categoryId]: `null` = sem categoria.
+  ///
+  /// Os dois são o estado FINAL desejado (e não "só o que mudou"): assim o
+  /// diálogo não precisa saber o que estava salvo antes.
+  ///
+  /// Não altera o "último acesso": editar não é continuar desenhando, então
   /// o item não deve pular para o topo da lista. Também não mexe em nenhum
   /// arquivo de imagem. Devolve o projeto atualizado. Lança
   /// [ProjectNotFoundException] se o projeto foi excluído.
-  Future<DrawingProject> rename(DrawingProject project, String? customName);
+  Future<DrawingProject> updateDetails(
+    DrawingProject project, {
+    required String? customName,
+    required String? categoryId,
+  });
+
+  /// Tira a categoria [categoryId] de TODOS os projetos que a usavam (eles
+  /// ficam sem categoria). Chamado depois de excluir uma categoria.
+  /// Devolve quantos projetos foram alterados.
+  Future<int> clearCategory(String categoryId);
 }
 
 /// O projeto pedido não existe (foi excluído ou os arquivos sumiram).

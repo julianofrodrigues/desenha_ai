@@ -12,6 +12,7 @@ import 'app.dart';
 import 'features/drawing/services/camera_service.dart';
 import 'features/drawing/services/screen_wake_lock.dart';
 import 'features/image_selection/data/local_image_source.dart';
+import 'features/projects/services/file_category_repository.dart';
 import 'features/projects/services/file_project_repository.dart';
 import 'features/projects/services/thumbnail_generator.dart';
 
@@ -39,6 +40,13 @@ Future<void> main() async {
       projectRepository: FileProjectRepository(
         root: projectsRoot,
         thumbnails: const UiThumbnailGenerator(),
+      ),
+      // Fase 5: um arquivo só, AO LADO da pasta `projects/` (e não dentro
+      // dela), para não ser confundido com a pasta de um projeto.
+      categoryRepository: FileCategoryRepository(
+        file: File(
+          '${documents.path}${Platform.pathSeparator}categories.json',
+        ),
       ),
       // Uma FÁBRICA: cada abertura da tela de desenho cria um serviço novo,
       // e a tela o descarta ao fechar. Assim a câmera nunca fica ligada fora

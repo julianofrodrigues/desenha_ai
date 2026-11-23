@@ -1,13 +1,22 @@
+// `dart:async` traz o `.wait` de registros de Futures (usado no
+// `_loadHistory` para ler projetos e categorias em paralelo).
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:material_ui/material_ui.dart';
 
 import '../../drawing/screens/drawing_screen.dart';
 import '../../drawing/services/screen_wake_lock.dart';
+import '../../projects/models/category_filter.dart';
 import '../../projects/models/drawing_project.dart';
+import '../../projects/models/project_category.dart';
+import '../../projects/screens/categories_screen.dart';
+import '../../projects/screens/category_filter_screen.dart';
+import '../../projects/services/category_repository.dart';
 import '../../projects/services/project_repository.dart';
+import '../../projects/widgets/delete_project_dialog.dart';
+import '../../projects/widgets/edit_project_dialog.dart';
 import '../../projects/widgets/project_history_list.dart';
-import '../../projects/widgets/rename_project_dialog.dart';
 import '../data/local_image_source.dart';
 import 'widgets/home_status_views.dart';
 
@@ -57,6 +66,7 @@ class HomePage extends StatefulWidget {
     super.key,
     required this.imageSource,
     required this.projectRepository,
+    required this.categoryRepository,
     required this.cameraServiceFactory,
     required this.screenWakeLock,
   });
@@ -65,6 +75,9 @@ class HomePage extends StatefulWidget {
 
   /// Histórico de projetos salvos no aparelho.
   final ProjectRepository projectRepository;
+
+  /// Categorias do usuário (Fase 5).
+  final CategoryRepository categoryRepository;
 
   /// Repassada à tela de desenho, que cria e descarta a câmera.
   final CameraServiceFactory cameraServiceFactory;
@@ -82,6 +95,11 @@ class _HomePageState extends State<HomePage> {
   /// `null` = histórico ainda carregando.
   List<DrawingProject>? _projects;
 
+  /// Categorias (Fase 5): a lista, em ordem alfabética, para o diálogo
+  /// Editar, e um mapa por id, para cada card achar a sua na hora.
+  List<ProjectCategory> _categories = const [];
+  Map<String, ProjectCategory> _categoriesById = const {};
+
   bool get _isBusy => _state is _Busy;
 
   ProjectRepository get _repository => widget.projectRepository;
@@ -93,6 +111,12 @@ class _HomePageState extends State<HomePage> {
   final _searchController = TextEditingController();
   final _searchFocusNode = FocusNode();
 
+  // Filtro por categoria (Fase 5, Etapa 5B). Um `ValueNotifier`, e não um
+  // campo + `setState`: marcar/desmarcar reconstrói só a faixa de
+  // categorias e a lista, e não a Home inteira. Também fica aqui (e não na
+  // lista) pelo mesmo motivo da busca: sobrevive às trocas de estado.
+  final _categoryFilter = ValueNotifier(CategoryFilter.none);
+
   @override
   void initState() {
     super.initState();
@@ -103,25 +127,50 @@ class _HomePageState extends State<HomePage> {
   void dispose() {
     _searchController.dispose();
     _searchFocusNode.dispose();
+    _categoryFilter.dispose();
     super.dispose();
   }
 
   Future<void> _loadHistory() async {
-    List<DrawingProject> projects;
-    try {
-      projects = await _repository.listRecent();
-    } catch (error) {
-      // Sem histórico a Home continua útil: ainda dá para começar um
-      // desenho novo.
-      debugPrint('Falha ao carregar o histórico: $error');
-      projects = const [];
-    }
+    // Projetos e categorias são lidos EM PARALELO (cada um no seu arquivo),
+    // e uma falha num não impede o outro: sem categorias, a lista aparece só
+    // sem as badges.
+    final (projects, categories) = await (
+      _loadOrEmpty(_repository.listRecent, 'histórico'),
+      _loadOrEmpty(widget.categoryRepository.listAll, 'categorias'),
+    ).wait;
     if (!mounted) return;
     // Histórico vazio = a barra de pesquisa some (tela de boas-vindas).
     // Limpamos o texto para que o próximo desenho não apareça "filtrado"
     // por uma busca que o usuário nem está vendo.
-    if (projects.isEmpty) _searchController.clear();
-    setState(() => _projects = projects);
+    // O mesmo vale para o filtro de categoria. Com histórico, só tiramos do
+    // filtro as categorias que não existem mais (removidas em outra tela).
+    if (projects.isEmpty) {
+      _searchController.clear();
+      _categoryFilter.value = CategoryFilter.none;
+    } else {
+      _categoryFilter.value =
+          _categoryFilter.value.retainOnly(categories.map((c) => c.id));
+    }
+    setState(() {
+      _projects = projects;
+      _categories = categories;
+      _categoriesById = {for (final c in categories) c.id: c};
+    });
+  }
+
+  /// Sem histórico (ou sem categorias) a Home continua útil: ainda dá para
+  /// começar um desenho novo.
+  static Future<List<T>> _loadOrEmpty<T>(
+    Future<List<T>> Function() load,
+    String what,
+  ) async {
+    try {
+      return await load();
+    } catch (error) {
+      debugPrint('Falha ao carregar $what: $error');
+      return <T>[];
+    }
   }
 
   /// Novo desenho: escolher imagem → copiar para o app → abrir.
@@ -212,68 +261,93 @@ class _HomePageState extends State<HomePage> {
     await _loadHistory();
   }
 
-  /// Renomear só dentro do app (Fase 4).
-  Future<void> _rename(DrawingProject project) async {
+  /// Editar nome (Fase 4) e categoria (Fase 5) só dentro do app.
+  Future<void> _edit(DrawingProject project) async {
     // Fecha o teclado da busca antes de abrir o diálogo, que tem o seu
     // próprio campo de texto.
     _searchFocusNode.unfocus();
-    final name = await showRenameProjectDialog(context, project);
-    if (name == null || !mounted) return; // cancelou: nada muda
-
-    // Mesmo nome de antes: não grava nem mostra mensagem.
-    final normalized = DrawingProject.normalizeCustomName(
-      name,
-      originalName: project.originalName,
+    final edit = await showEditProjectDialog(
+      context,
+      project: project,
+      categories: _categories,
     );
-    if (normalized == project.customName) return;
+    if (edit == null || !mounted) return; // cancelou: nada muda
+
+    // Compara com o que está VISÍVEL: uma categoria que não existe mais
+    // conta como "sem categoria".
+    final nameChanged = DrawingProject.normalizeCustomName(
+          edit.name,
+          originalName: project.originalName,
+        ) !=
+        project.customName;
+    final currentCategory = project.categoryIn(_categoriesById)?.id;
+    final categoryChanged = edit.categoryId != currentCategory;
+    if (!nameChanged && !categoryChanged) return; // nada a gravar
 
     try {
-      final renamed = await _repository.rename(project, name);
+      final updated = await _repository.updateDetails(
+        project,
+        customName: edit.name,
+        categoryId: edit.categoryId,
+      );
       if (!mounted) return;
-      // Atualiza a lista NA HORA, trocando só o item renomeado. Não
-      // precisamos reler o disco: a ordem não muda, porque renomear não
-      // altera o "último acesso".
+      // Atualiza a lista NA HORA, trocando só o item editado. Não precisamos
+      // reler o disco: a ordem não muda, porque editar não altera o "último
+      // acesso".
       setState(() {
         _projects = [
           for (final p in _projects ?? const <DrawingProject>[])
-            p.id == renamed.id ? renamed : p,
+            p.id == updated.id ? updated : p,
         ];
       });
-      _showMessage(
-        renamed.customName == null
-            ? 'Nome original restaurado.'
-            : 'Desenho renomeado.',
-      );
+      _showMessage(switch ((nameChanged, categoryChanged)) {
+        (true, false) when updated.customName == null =>
+          'Nome original restaurado.',
+        (true, false) => 'Desenho renomeado.',
+        (false, true) => 'Categoria atualizada.',
+        _ => 'Desenho atualizado.',
+      });
     } catch (error) {
-      debugPrint('Falha ao renomear ${project.id}: $error');
-      _showMessage('Não foi possível renomear o desenho.');
+      debugPrint('Falha ao editar ${project.id}: $error');
+      _showMessage('Não foi possível salvar as alterações.');
       await _loadHistory();
     }
   }
 
-  Future<void> _confirmDelete(DrawingProject project) async {
+  /// Tela de categorias (Fase 5). Ao voltar, recarrega tudo: categorias
+  /// podem ter sido criadas ou removidas, e projetos podem ter perdido o
+  /// vínculo.
+  Future<void> _openCategories() async {
     _searchFocusNode.unfocus();
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Excluir desenho?'),
-        content: Text(
-          '"${project.displayName}" e os ajustes salvos serão apagados do '
-          'app. A imagem original na galeria não é afetada.',
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => CategoriesScreen(
+          categoryRepository: widget.categoryRepository,
+          projectRepository: _repository,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Excluir'),
-          ),
-        ],
       ),
     );
-    if (confirmed != true) return;
+    await _loadHistory();
+  }
+
+  /// Seletor de categorias da faixa abaixo da busca (Etapa 5B).
+  Future<void> _openCategoryPicker() async {
+    _searchFocusNode.unfocus();
+    final result = await showCategoryFilterScreen(
+      context,
+      initial: _categoryFilter.value,
+      categoryRepository: widget.categoryRepository,
+      projectRepository: _repository,
+    );
+    // `null` = fechou sem aplicar: o filtro atual continua.
+    if (result != null) _categoryFilter.value = result;
+    // Sempre recarrega: categorias podem ter sido criadas ou removidas lá.
+    await _loadHistory();
+  }
+
+  Future<void> _confirmDelete(DrawingProject project) async {
+    _searchFocusNode.unfocus();
+    if (!await confirmDeleteProject(context, project)) return;
 
     try {
       await _repository.delete(project);
@@ -304,7 +378,18 @@ class _HomePageState extends State<HomePage> {
     final hasHistory = projects != null && projects.isNotEmpty;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('desenha_ai')),
+      appBar: AppBar(
+        title: const Text('desenha_ai'),
+        actions: [
+          // Sempre disponível (mesmo sem desenhos): dá para preparar as
+          // categorias antes de começar.
+          IconButton(
+            tooltip: 'Categorias',
+            onPressed: _openCategories,
+            icon: const Icon(Icons.label_outline),
+          ),
+        ],
+      ),
       // `SafeArea` afasta o conteúdo de entalhes, câmeras frontais e barras do
       // sistema, que variam bastante entre o Galaxy Tab A e o RedMagic.
       body: SafeArea(
@@ -329,8 +414,11 @@ class _HomePageState extends State<HomePage> {
                 searchController: _searchController,
                 searchFocusNode: _searchFocusNode,
                 onNewDrawing: _startNewDrawing,
+                categoriesById: _categoriesById,
+                categoryFilter: _categoryFilter,
+                onOpenCategoryPicker: _openCategoryPicker,
                 onOpen: _resume,
-                onRename: _rename,
+                onEdit: _edit,
                 onDelete: _confirmDelete,
               ),
           },

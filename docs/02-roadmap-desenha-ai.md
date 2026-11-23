@@ -205,6 +205,60 @@ formato de arquivo entre versões.
 
 ---
 
+## Fase 5 · Categorias e filtros 🚧
+
+Organizar o histórico por categorias do usuário, em etapas, sem descartar
+nada das fases anteriores. Detalhes: `docs/06-fase5-categorias-e-filtros.md`.
+
+### Etapa 5A · Base de categorias, vínculo no Editar e badge 🚧 (aguardando testes no aparelho)
+
+- **Categorias offline** em `categories.json`, no armazenamento interno:
+  criar com nome (sem vazio nem duplicado, ignorando maiúsculas e acentos) e
+  uma cor de uma paleta fixa de 12; remover com confirmação.
+- **Remover categoria é seguro:** os desenhos não são apagados, só ficam sem
+  categoria (`clearCategory`). Um id de categoria que não existe mais é
+  tratado como "sem categoria" em toda a UI.
+- **Botão Editar** (Fase 4) ganhou a escolha de categoria ("Sem categoria" +
+  chips coloridos). Nome e categoria são gravados juntos.
+- **Badge** com a cor e o nome da categoria no card. Sem categoria, o card
+  fica igual ao da Fase 4.
+
+| Decisão | Motivo |
+| --- | --- |
+| Projeto guarda só o `categoryId` | Excluir/editar a categoria não exige reescrever nome e cor em cada desenho. |
+| Um arquivo só para categorias | São poucas e pequenas; mais simples que uma pasta por item. |
+| Remove a categoria antes de limpar os vínculos | Se o app morrer no meio, sobra um id órfão, que a UI já trata como "sem categoria". |
+| Paleta fixa, sem seletor livre | Leve, fácil de tocar, cores bem distintas. |
+| `rename` virou `updateDetails` | Uma única gravação para nome + categoria. |
+
+### Etapa 5B · Faixa de categorias, seletor e filtro combinado 🚧 (aguardando testes no aparelho)
+
+- **Faixa abaixo da busca:** etiqueta neutra "Sem categoria" (marca/desmarca
+  o filtro), etiquetas coloridas das categorias marcadas (com "×") e, ao
+  lado, o botão "Categorias".
+- **Seletor em tela cheia:** pesquisar categorias, marcar uma ou várias
+  (incluindo "Sem categoria"), criar (inclusive "Criar categoria “x”" a
+  partir da pesquisa) e remover, com o mesmo código seguro da 5A.
+- **Filtro combinado:** categorias primeiro, depois a busca do topo, que
+  passa a procurar só dentro das categorias marcadas, com a mesma
+  prioridade de nomes da Fase 4.
+- **Sem nada marcado, todos os desenhos aparecem** (o comportamento das
+  Fases 3 e 4 continua igual).
+
+| Decisão | Motivo |
+| --- | --- |
+| `ValueNotifier<CategoryFilter>` na Home | Marcar/desmarcar reconstrói só a faixa e a lista. |
+| `CategoryFilter` imutável com `==` | O notifier só avisa quando o filtro muda de verdade. |
+| Seletor em tela cheia, e não `BottomSheet` | Teclado e SnackBars funcionam bem também no celular. |
+| Marcações como rascunho até "Aplicar" | Dá para explorar e desistir no "X" sem mexer no histórico. |
+| `retainOnly` ao recarregar | Categoria removida sai do filtro e não esconde desenhos. |
+
+### Próximas etapas
+
+A definir nos próximos pedidos.
+
+---
+
 ## Fora do escopo (por enquanto)
 
 - Qualquer recurso que precise de internet (nuvem, contas, compartilhamento

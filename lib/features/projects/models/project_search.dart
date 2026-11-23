@@ -1,3 +1,4 @@
+import 'category_filter.dart';
 import 'drawing_project.dart';
 
 /// Filtra o histórico pelo texto da barra de pesquisa (Fase 4).
@@ -34,6 +35,30 @@ List<DrawingProject> filterProjects(
 
 bool _matchesAll(String name, List<String> terms) =>
     terms.every(name.contains);
+
+/// Filtro COMBINADO do histórico (Fase 5, Etapa 5B): primeiro as categorias,
+/// depois a busca por nome.
+///
+/// A ordem é a regra pedida: com categorias marcadas, a barra de pesquisa
+/// procura SÓ dentro dos desenhos dessas categorias. A busca continua usando
+/// a prioridade de nomes da Fase 4 (customizado > original > "Imagem"),
+/// porque reaproveita [filterProjects].
+///
+/// Sem filtro de categoria, o resultado é idêntico ao da Fase 4.
+List<DrawingProject> applyHistoryFilters(
+  List<DrawingProject> projects, {
+  required String query,
+  required CategoryFilter categoryFilter,
+  required Map<String, Object?> categoriesById,
+}) {
+  final inCategories = categoryFilter.isActive
+      ? [
+          for (final p in projects)
+            if (categoryFilter.matches(p, categoriesById)) p,
+        ]
+      : projects;
+  return filterProjects(inCategories, query);
+}
 
 /// Minúsculas, sem acentos e com espaços simples.
 ///

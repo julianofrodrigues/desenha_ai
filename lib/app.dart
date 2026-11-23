@@ -4,6 +4,7 @@ import 'features/drawing/screens/drawing_screen.dart';
 import 'features/drawing/services/screen_wake_lock.dart';
 import 'features/image_selection/data/local_image_source.dart';
 import 'features/image_selection/presentation/home_page.dart';
+import 'features/projects/services/category_repository.dart';
 import 'features/projects/services/project_repository.dart';
 
 /// Widget raiz do desenha_ai.
@@ -16,6 +17,7 @@ class DesenhaAiApp extends StatelessWidget {
     super.key,
     required this.imageSource,
     required this.projectRepository,
+    required this.categoryRepository,
     required this.cameraServiceFactory,
     required this.screenWakeLock,
   });
@@ -26,6 +28,9 @@ class DesenhaAiApp extends StatelessWidget {
 
   /// Histórico de projetos no armazenamento interno.
   final ProjectRepository projectRepository;
+
+  /// Categorias do usuário no armazenamento interno (Fase 5).
+  final CategoryRepository categoryRepository;
 
   /// Cria o serviço de câmera usado pela tela de desenho.
   final CameraServiceFactory cameraServiceFactory;
@@ -58,6 +63,7 @@ class DesenhaAiApp extends StatelessWidget {
       home: HomePage(
         imageSource: imageSource,
         projectRepository: projectRepository,
+        categoryRepository: categoryRepository,
         cameraServiceFactory: cameraServiceFactory,
         screenWakeLock: screenWakeLock,
       ),

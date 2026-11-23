@@ -20,6 +20,7 @@ class DrawingProject {
     required this.updatedAt,
     this.settings = const DrawingSettings(),
     this.customName,
+    this.categoryId,
   });
 
   /// Versão do formato do `project.json`. Se o formato mudar no futuro,
@@ -56,6 +57,20 @@ class DrawingProject {
   /// e nunca vazio (ver [rename]).
   final String? customName;
 
+  /// Categoria do desenho (Fase 5, Etapa 5A), ou `null` se não tiver.
+  ///
+  /// Pode apontar para uma categoria que não existe mais (ex.: o app foi
+  /// fechado no meio da exclusão de uma categoria). A UI trata isso como
+  /// "sem categoria" (ver [categoryIn]), então nunca quebra.
+  final String? categoryId;
+
+  /// A categoria deste projeto dentro de [categoriesById], ou `null` se não
+  /// tiver categoria ou se ela não existir mais.
+  T? categoryIn<T>(Map<String, T> categoriesById) {
+    final id = categoryId;
+    return id == null ? null : categoriesById[id];
+  }
+
   final String imageFileName;
 
   /// `null` se não foi possível gerar a miniatura (ex.: formato exótico).
@@ -90,7 +105,21 @@ class DrawingProject {
   /// volta a exibir o nome original. Assim "limpar o campo" é o jeito de
   /// desfazer a renomeação, e não existe um nome customizado que não muda
   /// nada.
-  DrawingProject rename(String? name) {
+  DrawingProject rename(String? name) => _copy(
+        customName: normalizeCustomName(name, originalName: originalName),
+        categoryId: categoryId,
+      );
+
+  /// Copia com outra categoria (`null` = sem categoria). Um id em formato
+  /// inválido também vira `null`, pela mesma regra da leitura do JSON.
+  DrawingProject withCategory(String? categoryId) => _copy(
+        customName: customName,
+        categoryId: _validCategoryId(categoryId),
+      );
+
+  /// Cópia que pode trocar os campos ANULÁVEIS editados pelo usuário.
+  /// (`copyWith` não serve para isso: nele, `null` significa "manter".)
+  DrawingProject _copy({String? customName, String? categoryId}) {
     return DrawingProject(
       id: id,
       originalName: originalName,
@@ -99,9 +128,13 @@ class DrawingProject {
       createdAt: createdAt,
       updatedAt: updatedAt,
       settings: settings,
-      customName: normalizeCustomName(name, originalName: originalName),
+      customName: customName,
+      categoryId: categoryId,
     );
   }
+
+  static String? _validCategoryId(Object? value) =>
+      value is String && validId.hasMatch(value) ? value : null;
 
   /// Regra de normalização do nome customizado (ver [rename]). Pública para
   /// o diálogo de renomear saber se o nome digitado muda algo.
@@ -127,6 +160,7 @@ class DrawingProject {
       updatedAt: updatedAt ?? this.updatedAt,
       settings: settings ?? this.settings,
       customName: customName,
+      categoryId: categoryId,
     );
   }
 
@@ -137,6 +171,8 @@ class DrawingProject {
         // Fase 4. Campo OPCIONAL: arquivos da Fase 3 não o têm e continuam
         // válidos, por isso o `schemaVersion` não mudou (ver docs/05).
         'customName': customName,
+        // Fase 5. Também opcional, pelo mesmo motivo do `customName`.
+        'categoryId': categoryId,
         'imageFile': imageFileName,
         'thumbnailFile': thumbnailFileName,
         // ISO 8601 em UTC: texto legível, ordenável e sem ambiguidade de fuso
@@ -193,6 +229,8 @@ class DrawingProject {
       customName: customName is String
           ? normalizeCustomName(customName, originalName: original)
           : null,
+      // Id em formato inválido = sem categoria (não derruba o projeto).
+      categoryId: _validCategoryId(json['categoryId']),
       imageFileName: imageFile,
       thumbnailFileName: thumbnailFile as String?,
       createdAt: _readDate(json['createdAt']),
@@ -215,6 +253,7 @@ class DrawingProject {
       other.id == id &&
       other.originalName == originalName &&
       other.customName == customName &&
+      other.categoryId == categoryId &&
       other.imageFileName == imageFileName &&
       other.thumbnailFileName == thumbnailFileName &&
       other.createdAt == createdAt &&
@@ -226,6 +265,7 @@ class DrawingProject {
         id,
         originalName,
         customName,
+        categoryId,
         imageFileName,
         thumbnailFileName,
         createdAt,

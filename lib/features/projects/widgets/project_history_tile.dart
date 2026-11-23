@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:material_ui/material_ui.dart';
 
 import '../models/drawing_project.dart';
+import '../models/project_category.dart';
+import 'category_badge.dart';
 
 /// Um item da seção "Continuar desenhando".
 class ProjectHistoryTile extends StatelessWidget {
@@ -11,15 +13,21 @@ class ProjectHistoryTile extends StatelessWidget {
     required this.project,
     required this.thumbnail,
     required this.onOpen,
-    required this.onRename,
+    required this.onEdit,
     required this.onDelete,
+    this.category,
   });
 
   final DrawingProject project;
   final File? thumbnail;
   final VoidCallback onOpen;
-  final VoidCallback onRename;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
+
+  /// Categoria JÁ resolvida por quem monta a lista: `null` se o projeto não
+  /// tem categoria ou se ela foi excluída. O card nunca procura categorias
+  /// sozinho, então não há como mostrar uma categoria que não existe.
+  final ProjectCategory? category;
 
   /// Lado da miniatura em dp. Toque confortável e pouca memória.
   static const double thumbnailSize = 64;
@@ -40,16 +48,17 @@ class ProjectHistoryTile extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        subtitle: Text(subtitle),
+        subtitle: _Subtitle(text: subtitle, category: category),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             // Editar fica à ESQUERDA do excluir: a ação comum e reversível
             // vem primeiro, e a destrutiva fica na ponta, mais longe do
             // texto que o usuário está lendo.
+            // Fase 5: o mesmo botão agora edita nome E categoria.
             IconButton(
-              tooltip: 'Renomear desenho',
-              onPressed: onRename,
+              tooltip: 'Editar desenho',
+              onPressed: onEdit,
               icon: const Icon(Icons.edit_outlined),
             ),
             IconButton(
@@ -61,6 +70,32 @@ class ProjectHistoryTile extends StatelessWidget {
         ),
         onTap: onOpen,
       ),
+    );
+  }
+}
+
+/// Data · modo e, se houver, a badge da categoria embaixo.
+///
+/// Sem categoria, fica só a linha de texto, exatamente como na Fase 4: o
+/// card não ganha espaço vazio nem muda de altura à toa.
+class _Subtitle extends StatelessWidget {
+  const _Subtitle({required this.text, required this.category});
+
+  final String text;
+  final ProjectCategory? category;
+
+  @override
+  Widget build(BuildContext context) {
+    final category = this.category;
+    if (category == null) return Text(text);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(text),
+        const SizedBox(height: 4),
+        CategoryBadge(category: category),
+      ],
     );
   }
 }

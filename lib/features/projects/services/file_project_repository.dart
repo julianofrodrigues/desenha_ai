@@ -166,7 +166,11 @@ class FileProjectRepository implements ProjectRepository {
   }
 
   @override
-  Future<DrawingProject> rename(DrawingProject project, String? customName) {
+  Future<DrawingProject> updateDetails(
+    DrawingProject project, {
+    required String? customName,
+    required String? categoryId,
+  }) {
     return _serialized(() async {
       final dir = _projectDir(project.id);
       final file = _file(dir, _projectFile);
@@ -176,16 +180,44 @@ class FileProjectRepository implements ProjectRepository {
       // Home pode estar um pouco desatualizada (ex.: o salvamento automático
       // da tela de desenho terminou depois de a lista ser lida). Se
       // gravássemos o objeto da lista, os ajustes mais novos seriam perdidos.
-      final json = jsonDecode(await file.readAsString());
-      final current = DrawingProject.fromJson(json as Map<String, Object?>);
+      final current = await _readProject(file);
 
-      final renamed = current.rename(customName);
-      // Nada mudou (mesmo nome): evita uma gravação inútil na memória flash.
-      if (renamed.customName != current.customName) {
-        await _writeProject(dir, renamed);
-      }
-      return renamed;
+      final updated =
+          current.rename(customName).withCategory(categoryId);
+      // Nada mudou: evita uma gravação inútil na memória flash.
+      if (updated != current) await _writeProject(dir, updated);
+      return updated;
     });
+  }
+
+  @override
+  Future<int> clearCategory(String categoryId) {
+    return _serialized(() async {
+      if (!await root.exists()) return 0;
+      var changed = 0;
+      await for (final entity in root.list(followLinks: false)) {
+        if (entity is! Directory) continue;
+        final file = _file(entity, _projectFile);
+        if (!await file.exists()) continue;
+        try {
+          final project = await _readProject(file);
+          if (project.categoryId != categoryId) continue;
+          await _writeProject(entity, project.withCategory(null));
+          changed++;
+        } catch (error) {
+          // Um projeto ilegível não impede limpar os outros. Se ele voltar a
+          // ser lido um dia, a categoria inexistente aparece como "sem
+          // categoria" (ver DrawingProject.categoryId).
+          debugPrint('Vínculo não limpo em ${entity.path}: $error');
+        }
+      }
+      return changed;
+    });
+  }
+
+  Future<DrawingProject> _readProject(File file) async {
+    final json = jsonDecode(await file.readAsString());
+    return DrawingProject.fromJson(json as Map<String, Object?>);
   }
 
   @override

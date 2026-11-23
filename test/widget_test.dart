@@ -14,7 +14,7 @@ import 'package:desenha_ai/features/drawing/screens/drawing_screen.dart';
 import 'package:desenha_ai/features/image_selection/data/local_image_source.dart';
 import 'package:desenha_ai/features/projects/widgets/project_history_tile.dart';
 import 'package:desenha_ai/features/projects/widgets/project_search_field.dart';
-import 'package:desenha_ai/features/projects/widgets/rename_project_dialog.dart';
+import 'package:desenha_ai/features/projects/widgets/edit_project_dialog.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -23,11 +23,13 @@ import 'fakes.dart';
 Widget _app(
   FakeImageSource source, {
   FakeProjectRepository? repository,
+  FakeCategoryRepository? categories,
   FakeScreenWakeLock? wakeLock,
 }) =>
     DesenhaAiApp(
       imageSource: source,
       projectRepository: repository ?? FakeProjectRepository(),
+      categoryRepository: categories ?? FakeCategoryRepository(),
       cameraServiceFactory: FakeCameraService.new,
       screenWakeLock: wakeLock ?? FakeScreenWakeLock(),
     );
@@ -269,7 +271,7 @@ void main() {
 
     /// Campo de texto DENTRO do diálogo (a Home também tem o da busca).
     Finder dialogField() => find.descendant(
-          of: find.byType(RenameProjectDialog),
+          of: find.byType(EditProjectDialog),
           matching: find.byType(TextField),
         );
 
@@ -277,7 +279,7 @@ void main() {
         (tester) async {
       await pumpWithOne(tester);
 
-      final edit = tester.getCenter(find.byTooltip('Renomear desenho'));
+      final edit = tester.getCenter(find.byTooltip('Editar desenho'));
       final delete = tester.getCenter(find.byTooltip('Excluir desenho'));
       expect(edit.dx, lessThan(delete.dx));
       expect(edit.dy, closeTo(delete.dy, 1)); // mesma linha
@@ -287,7 +289,7 @@ void main() {
         (tester) async {
       final repo = await pumpWithOne(tester);
 
-      await tester.tap(find.byTooltip('Renomear desenho'));
+      await tester.tap(find.byTooltip('Editar desenho'));
       await settle(tester);
       // O campo começa com o nome atual.
       expect(
@@ -311,7 +313,7 @@ void main() {
     testWidgets('confirmar pelo teclado ("concluído") também salva',
         (tester) async {
       final repo = await pumpWithOne(tester);
-      await tester.tap(find.byTooltip('Renomear desenho'));
+      await tester.tap(find.byTooltip('Editar desenho'));
       await settle(tester);
 
       await tester.enterText(dialogField(), 'Pelo teclado');
@@ -323,7 +325,7 @@ void main() {
 
     testWidgets('cancelar mantém o nome anterior', (tester) async {
       final repo = await pumpWithOne(tester, customName: 'Antigo');
-      await tester.tap(find.byTooltip('Renomear desenho'));
+      await tester.tap(find.byTooltip('Editar desenho'));
       await settle(tester);
 
       await tester.enterText(dialogField(), 'Não deve salvar');
@@ -331,13 +333,13 @@ void main() {
       await settle(tester);
 
       expect(find.text('Antigo'), findsOneWidget);
-      expect(repo.renames, isEmpty);
+      expect(repo.edits, isEmpty);
     });
 
     testWidgets('campo vazio ou só espaços volta ao nome original',
         (tester) async {
       final repo = await pumpWithOne(tester, customName: 'Gato azul');
-      await tester.tap(find.byTooltip('Renomear desenho'));
+      await tester.tap(find.byTooltip('Editar desenho'));
       await settle(tester);
 
       await tester.enterText(dialogField(), '    ');
@@ -351,13 +353,13 @@ void main() {
 
     testWidgets('salvar o mesmo nome não grava nada', (tester) async {
       final repo = await pumpWithOne(tester, customName: 'Gato azul');
-      await tester.tap(find.byTooltip('Renomear desenho'));
+      await tester.tap(find.byTooltip('Editar desenho'));
       await settle(tester);
 
       await tester.tap(find.text('Salvar')); // texto inalterado
       await settle(tester);
 
-      expect(repo.renames, isEmpty);
+      expect(repo.edits, isEmpty);
     });
 
     testWidgets('renomear não muda a ordem do histórico', (tester) async {
@@ -369,7 +371,7 @@ void main() {
       await tester.pump();
 
       // Renomeia o item de BAIXO (o mais antigo).
-      await tester.tap(find.byTooltip('Renomear desenho').last);
+      await tester.tap(find.byTooltip('Editar desenho').last);
       await settle(tester);
       await tester.enterText(dialogField(), 'Renomeado');
       await tester.tap(find.text('Salvar'));
@@ -470,11 +472,11 @@ void main() {
 
       await tester.tap(find.byTooltip('Limpar pesquisa'));
       await tester.pump();
-      await tester.tap(find.byTooltip('Renomear desenho').at(1)); // gato.png
+      await tester.tap(find.byTooltip('Editar desenho').at(1)); // gato.png
       await settle(tester);
       await tester.enterText(
         find.descendant(
-          of: find.byType(RenameProjectDialog),
+          of: find.byType(EditProjectDialog),
           matching: find.byType(TextField),
         ),
         'Cachorro',
