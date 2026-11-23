@@ -24,6 +24,7 @@ Future<void> _pumpApp(
       categoryRepository: categories,
       cameraServiceFactory: FakeCameraService.new,
       screenWakeLock: FakeScreenWakeLock(),
+      themeController: fakeThemeController(),
     ),
   );
   await tester.pump();

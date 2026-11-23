@@ -15,6 +15,8 @@ import 'features/image_selection/data/local_image_source.dart';
 import 'features/projects/services/file_category_repository.dart';
 import 'features/projects/services/file_project_repository.dart';
 import 'features/projects/services/thumbnail_generator.dart';
+import 'features/theme/services/theme_controller.dart';
+import 'features/theme/services/theme_preference_store.dart';
 
 Future<void> main() async {
   // Necessário antes de usar plugins (como o path_provider) antes do
@@ -28,6 +30,15 @@ Future<void> main() async {
   final documents = await getApplicationDocumentsDirectory();
   final projectsRoot =
       Directory('${documents.path}${Platform.pathSeparator}projects');
+
+  // Fase 6: lê a escolha de tema ANTES do primeiro quadro, para o app já
+  // abrir no tema certo (sem piscar). Sem escolha salva, segue o sistema.
+  // O controlador vive o app inteiro, então não há um `dispose` a chamar.
+  final themeController = await ThemeController.load(
+    FileThemePreferenceStore(
+      file: File('${documents.path}${Platform.pathSeparator}preferences.json'),
+    ),
+  );
 
   // `runApp` recebe o widget raiz e o "infla" na tela.
   //
@@ -53,6 +64,7 @@ Future<void> main() async {
       // da tela de desenho.
       cameraServiceFactory: PluginCameraService.new,
       screenWakeLock: const WakelockPlusScreenWakeLock(),
+      themeController: themeController,
     ),
   );
 }

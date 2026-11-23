@@ -65,6 +65,7 @@ Future<({FakeProjectRepository projects, FakeCategoryRepository categories})>
       categoryRepository: categories,
       cameraServiceFactory: FakeCameraService.new,
       screenWakeLock: FakeScreenWakeLock(),
+      themeController: fakeThemeController(),
     ),
   );
   await tester.pump();

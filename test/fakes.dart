@@ -11,6 +11,8 @@ import 'package:desenha_ai/features/projects/models/project_category.dart';
 import 'package:desenha_ai/features/projects/models/project_search.dart';
 import 'package:desenha_ai/features/projects/services/category_repository.dart';
 import 'package:desenha_ai/features/projects/services/project_repository.dart';
+import 'package:desenha_ai/features/theme/services/theme_controller.dart';
+import 'package:desenha_ai/features/theme/services/theme_preference_store.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -252,6 +254,31 @@ DrawingProject sampleProject({
     settings: settings,
   );
 }
+
+/// Preferência de tema em memória (Fase 6). [saved] é o que estaria no
+/// disco; [saves] conta as gravações; [failOnSave] simula disco cheio.
+class FakeThemePreferenceStore implements ThemePreferenceStore {
+  FakeThemePreferenceStore({this.saved, this.failOnSave = false});
+
+  Brightness? saved;
+  bool failOnSave;
+  int saves = 0;
+
+  @override
+  Future<Brightness?> load() async => saved;
+
+  @override
+  Future<void> save(Brightness brightness) async {
+    saves++;
+    if (failOnSave) throw const FileSystemException('disco cheio');
+    saved = brightness;
+  }
+}
+
+/// Controlador de tema para os testes que não ligam para o tema: começa no
+/// modo do sistema e grava em memória.
+ThemeController fakeThemeController() =>
+    ThemeController(store: FakeThemePreferenceStore());
 
 /// Wakelock falso: guarda se está ligado e quantas vezes foi chamado.
 class FakeScreenWakeLock implements ScreenWakeLock {

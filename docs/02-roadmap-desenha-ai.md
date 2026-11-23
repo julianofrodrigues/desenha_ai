@@ -259,6 +259,36 @@ A definir nos próximos pedidos.
 
 ---
 
+## Fase 6 · Redesign visual 🚧
+
+Nova identidade visual, em etapas, sem mudar nenhuma funcionalidade.
+Detalhes: `docs/07-fase6-tema-e-layout.md`.
+
+### Etapa 6A · Tema claro/escuro, detecção inicial e botão de sol/lua 🚧 (aguardando testes no aparelho)
+
+- **Paleta própria** inspirada na estética de apps de design (Canva):
+  violeta + turquesa, fundo limpo, cantos arredondados, bordas finas no
+  lugar de sombras. Modos claro e escuro, com contraste testado.
+- **Primeira execução:** segue o tema do sistema.
+- **Escolha manual** salva em `preferences.json` (offline, sem permissão);
+  nas próximas aberturas vale a escolha, até um novo toque.
+- **Botão único de sol/lua** no canto superior direito da Home, com
+  animação leve (transições na pintura, sem rebuild).
+
+| Decisão | Motivo |
+| --- | --- |
+| Arquivo JSON, sem `shared_preferences` | Um valor só; mesmas proteções do resto do app, sem dependência nova. |
+| Ler a preferência antes do `runApp` | O app abre no tema certo, sem piscar. |
+| `ThemeData` criados uma vez | Trocar o tema não recalcula estilos. |
+| Botão segue o modo escolhido, e não o `Theme` | Animação imediata; o `Theme` só muda de brilho no meio da transição. |
+| Mesa de Luz e controles do desenho fora do tema | Fazem parte da função de desenhar, não da aparência. |
+
+### Próximas etapas
+
+A definir nos próximos pedidos.
+
+---
+
 ## Fora do escopo (por enquanto)
 
 - Qualquer recurso que precise de internet (nuvem, contas, compartilhamento

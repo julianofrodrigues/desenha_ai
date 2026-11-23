@@ -32,6 +32,7 @@ Widget _app(
       categoryRepository: categories ?? FakeCategoryRepository(),
       cameraServiceFactory: FakeCameraService.new,
       screenWakeLock: wakeLock ?? FakeScreenWakeLock(),
+      themeController: fakeThemeController(),
     );
 
 FakeImageSource _picks(String name) =>

@@ -17,6 +17,8 @@ import '../../projects/services/project_repository.dart';
 import '../../projects/widgets/delete_project_dialog.dart';
 import '../../projects/widgets/edit_project_dialog.dart';
 import '../../projects/widgets/project_history_list.dart';
+import '../../theme/services/theme_controller.dart';
+import '../../theme/widgets/theme_toggle_button.dart';
 import '../data/local_image_source.dart';
 import 'widgets/home_status_views.dart';
 
@@ -69,7 +71,11 @@ class HomePage extends StatefulWidget {
     required this.categoryRepository,
     required this.cameraServiceFactory,
     required this.screenWakeLock,
+    required this.themeController,
   });
+
+  /// Alternância claro/escuro do botão de sol/lua (Fase 6).
+  final ThemeController themeController;
 
   final LocalImageSource imageSource;
 
@@ -388,6 +394,10 @@ class _HomePageState extends State<HomePage> {
             onPressed: _openCategories,
             icon: const Icon(Icons.label_outline),
           ),
+          // Fase 6: botão único de sol/lua, no canto superior DIREITO (o
+          // último item da barra).
+          ThemeToggleButton(controller: widget.themeController),
+          const SizedBox(width: 4),
         ],
       ),
       // `SafeArea` afasta o conteúdo de entalhes, câmeras frontais e barras do
