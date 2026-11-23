@@ -4,7 +4,13 @@
 > o documento da Fase 5 (`docs/06-fase5-categorias-e-filtros.md`). Para
 > manter a ordem de leitura, este é o **07**.
 
-A Fase 6 é o **redesign visual**. A **Etapa 6A** cobre:
+A Fase 6 é o **redesign visual**, em etapas:
+
+- **Etapa 6A** (seções 1 a 5): tema claro/escuro e botão de sol/lua.
+- **Etapa 6B** (seção 6): Home sem header, botão de sol/lua flutuando no
+  canto, botões lado a lado sem imagem e a marca "Desenha A.I" desenhada.
+
+A **Etapa 6A** cobre:
 
 - paleta própria nos modos **claro** e **escuro**;
 - **primeira execução** seguindo o tema do sistema operacional;
@@ -224,3 +230,174 @@ Os testes das fases anteriores só ganharam o parâmetro `themeController`
    último estado é o que fica ao reabrir.
 6. No Galaxy Tab A, confira se a troca de tema não engasga a rolagem da
    lista.
+
+---
+
+## 6. Etapa 6B: Home sem header e marca desenhada
+
+Arquivos da etapa:
+
+```
+lib/features/theme/widgets/desenha_ai_logo.dart        ← marca "Desenha A.I" (CustomPainter)
+lib/features/image_selection/presentation/
+├─ home_page.dart                                      ← sem AppBar; Stack + SafeArea
+└─ widgets/home_status_views.dart                      ← boas-vindas: marca + botões lado a lado
+lib/features/projects/widgets/project_history_list.dart ← marca no topo da listagem
+```
+
+### 6.1 Header removido por completo
+
+A Home **não tem mais `AppBar`**: sumiram a barra, o título `desenha_ai` e o
+ícone de etiqueta ("Categorias") que ficava nela.
+
+```
+ANTES (6A)                                  AGORA (6B)
+┌───────────────────────────────────┐       ┌───────────────────────────────────┐
+│ desenha_ai            🏷️   ☀️      │       │                              ☀️    │
+├───────────────────────────────────┤       │           Desenha A.I              │
+│ [ Novo desenho ]                  │       │ [ Novo desenho ]                  │
+│ Continuar desenhando              │       │ Continuar desenhando              │
+│ [🔍 Pesquisar desenhos ]          │       │ [🔍 Pesquisar desenhos ]          │
+│ …                                 │       │ … (igual)                         │
+```
+
+Tudo **abaixo da barra de pesquisa ficou intacto**: faixa de categorias,
+cards, editar, remover, filtro e busca têm o mesmo código e os mesmos dados.
+
+**Para onde foi o acesso à tela "Categorias"?**
+
+| Estado da Home | Caminho |
+| --- | --- |
+| sem imagem | botão **Categorias** ao lado de "Escolher imagem" (6.3) |
+| com listagem | botão **Categorias** da faixa abaixo da busca (Etapa 5B), que também cria e remove |
+
+### 6.2 Botão de sol/lua flutuando no canto superior direito
+
+```dart
+// home_page.dart
+Scaffold(
+  body: Stack(children: [
+    SafeArea(child: AnimatedSwitcher(child: content)),   // estado da Home
+    SafeArea(child: Align(                               // botão por cima
+      alignment: Alignment.topRight,
+      child: Padding(padding: EdgeInsets.all(8),
+        child: ThemeToggleButton(controller: ...)),
+    )),
+  ]),
+)
+```
+
+- O botão fica numa **`SafeArea` própria**: longe da barra de status, de
+  entalhes e de câmeras frontais.
+- Fica **fora** do `AnimatedSwitcher`: aparece igual em todos os estados
+  (boas-vindas, carregando, erro, listagem) e não pisca quando a Home troca
+  de estado.
+- O botão em si não mudou (animação, persistência e `dispose` da 6A).
+
+### 6.3 Barra de status sem AppBar
+
+Era a `AppBar` que dizia ao Android a cor dos ícones da barra de status
+(relógio, bateria). Sem ela, os ícones poderiam ficar brancos sobre o fundo
+claro. A Home agora faz isso explicitamente:
+
+```dart
+AnnotatedRegion<SystemUiOverlayStyle>(
+  value: (isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark)
+      .copyWith(statusBarColor: Colors.transparent),
+  child: Scaffold(...),
+)
+```
+
+Ícones escuros no tema claro e claros no escuro, com a barra transparente
+(o fundo do app aparece por trás).
+
+### 6.4 Botões lado a lado no estado sem imagem
+
+```
+            Desenha A.I
+   Escolha uma imagem de referência
+   Use uma foto ou desenho salvo…
+
+ [ 🖼  Escolher imagem ] [ 🏷  Categorias ]
+```
+
+- Mesmo **molde**: os dois são `FilledButton.icon`, com a mesma altura
+  (56 dp) e o mesmo estilo.
+- `Expanded` nos dois: dividem a largura igualmente e cabem lado a lado até
+  num celular em pé (há um teste com 360 dp).
+- O botão de categoria tem o **ícone de etiqueta** e abre a tela
+  "Categorias" (criar e remover).
+
+### 6.5 "Desenha A.I" em letras desenhadas
+
+A marca é **desenhada traço a traço** por um `CustomPainter`, sem fonte e
+sem imagem.
+
+**Como as letras são feitas:**
+
+1. Cada letra é uma lista de **traços**, e cada traço uma lista de
+   **pontos** por onde a "caneta" passa (coordenadas em unidades: y = 0 é o
+   topo das maiúsculas, y = 1 a linha de base).
+2. Os pontos são ligados por **curvas quadráticas** que passam pelo meio
+   entre um ponto e o próximo. O traço fica sem quinas, como feito à mão.
+3. Dois passes de pintura:
+   - um traço fino, transparente e levemente deslocado, que lembra **lápis**
+     de esboço;
+   - por cima, o traço principal ("tinta") com **degradê** violeta →
+     turquesa, as cores do tema.
+4. Pontas e junções **redondas** (`StrokeCap.round`): o ponto do "A.I" é um
+   traço curtíssimo que vira uma gota de caneta.
+
+**Por que não uma fonte manuscrita?** Uma fonte custa centenas de KB no APK
+e cobre milhares de letras; usamos 9. Um caminho vetorial próprio é leve,
+100% offline e nítido em qualquer tamanho.
+
+**Desempenho:**
+
+| Cuidado | Efeito |
+| --- | --- |
+| contorno montado **uma vez** (`static final`) em unidades | pintar é só `scale` + `drawPath` |
+| `shouldRepaint` compara só as **cores** | só repinta ao trocar o tema |
+| `RepaintBoundary` em volta | rolar a lista ou digitar na busca não repinta a marca |
+| `Semantics(label: 'Desenha A.I')` | o leitor de tela lê a marca como texto |
+
+**Onde aparece:**
+
+| Tela | Posição |
+| --- | --- |
+| sem imagem | no centro, acima de "Escolha uma imagem de referência", no lugar do ícone grande das fases anteriores |
+| com listagem | centralizada no **topo da lista**, rolando junto com ela, com margem de 56 dp nas laterais para não ficar sob o botão de sol/lua |
+
+Na listagem, a marca **não** fica fixa no meio da tela: fixa, ficaria por
+cima dos cards e atrapalharia a leitura e os toques.
+
+### 6.6 Testes
+
+`test/theme/home_layout_test.dart` (para os estados **sem imagem** e **com
+listagem**):
+
+| O que cobre |
+| --- |
+| sem `AppBar`/`SliverAppBar`, sem o título `desenha_ai` e sem o ícone "Categorias" do header |
+| botão de sol/lua no canto superior direito, dentro de `SafeArea`, e alternando o tema |
+| marca "Desenha A.I" presente, desenhada com o `DesenhaAiLogoPainter` (sem texto de fonte), centralizada e sem sobrepor o botão |
+| sem imagem: "Escolher imagem" e "Categorias" na mesma linha, mesmo tamanho e tipo, ícone de etiqueta, abre a tela de categorias, cabe em 360 dp |
+| com listagem: busca, faixa, cards, editar, excluir, badge e "Novo desenho" preservados; marca acima da busca; busca e seletor funcionando |
+| marca e ícones da barra de status acompanham o tema |
+| `shouldRepaint` só quando as cores mudam |
+
+Testes anteriores ajustados: o da posição do botão (6A) não compara mais com
+o ícone do header, e os da tela "Categorias" (5A) abrem a tela pelo botão
+novo ou diretamente.
+
+### 6.7 Como testar no aparelho
+
+1. Sem desenhos: a Home mostra a marca no centro e os dois botões lado a
+   lado. "Categorias" abre a tela de categorias.
+2. Com desenhos: a marca fica no topo, sem barra. Busca, faixa e cards
+   funcionam como antes.
+3. O sol/lua continua no canto superior direito nos dois estados, sem ficar
+   sob a câmera frontal do RedMagic nem sob a barra de status.
+4. Alterne o tema: a marca muda de cor, e os ícones do relógio/bateria
+   continuam visíveis.
+5. Role a lista no Galaxy Tab A: a marca sobe junto, sem engasgar.

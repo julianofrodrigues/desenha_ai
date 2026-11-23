@@ -1,8 +1,10 @@
 // `dart:async` traz o `.wait` de registros de Futures (usado no
 // `_loadHistory` para ler projetos e categorias em paralelo).
 import 'dart:async';
-import 'dart:typed_data';
 
+// `services.dart` traz o `SystemUiOverlayStyle` (cor dos ícones da barra de
+// status) e também o `Uint8List` usado nas imagens.
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../drawing/screens/drawing_screen.dart';
@@ -383,57 +385,78 @@ class _HomePageState extends State<HomePage> {
     final projects = _projects;
     final hasHistory = projects != null && projects.isNotEmpty;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('desenha_ai'),
-        actions: [
-          // Sempre disponível (mesmo sem desenhos): dá para preparar as
-          // categorias antes de começar.
-          IconButton(
-            tooltip: 'Categorias',
-            onPressed: _openCategories,
-            icon: const Icon(Icons.label_outline),
-          ),
-          // Fase 6: botão único de sol/lua, no canto superior DIREITO (o
-          // último item da barra).
-          ThemeToggleButton(controller: widget.themeController),
-          const SizedBox(width: 4),
-        ],
-      ),
-      // `SafeArea` afasta o conteúdo de entalhes, câmeras frontais e barras do
-      // sistema, que variam bastante entre o Galaxy Tab A e o RedMagic.
-      body: SafeArea(
-        // `AnimatedSwitcher` faz um fade curto entre os estados. A transição
-        // deixa claro que algo mudou, sem atrasar o usuário.
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 200),
-          child: switch (_state) {
-            _Busy(:final message) => HomeLoadingView(message: message),
-            _Failed(:final message) => HomeErrorView(
-                message: message,
-                onRetry: _startNewDrawing,
+    // Fase 6 (Etapa 6B): SEM AppBar. Quem ajustava a cor dos ícones da barra
+    // de status (relógio, bateria) era a AppBar; sem ela, fazemos aqui:
+    // ícones escuros no tema claro e claros no escuro, com fundo
+    // transparente para o fundo do app aparecer por trás.
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final statusBar =
+        (isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark)
+            .copyWith(statusBarColor: Colors.transparent);
+
+    // O conteúdo de cada estado. Uma variável local (e não um método
+    // `_buildX()`, que o steering desaconselha): cada estado já é um widget
+    // próprio, aqui só escolhemos qual.
+    final Widget content = switch (_state) {
+      _Busy(:final message) => HomeLoadingView(message: message),
+      _Failed(:final message) => HomeErrorView(
+          message: message,
+          onRetry: _startNewDrawing,
+        ),
+      // Primeiro uso (ou histórico vazio): a tela de boas-vindas grande. A
+      // busca só aparece quando há o que buscar.
+      _Idle() when !hasHistory => HomeWelcomeView(
+          onPick: _startNewDrawing,
+          onOpenCategories: _openCategories,
+        ),
+      _Idle() => ProjectHistoryList(
+          projects: projects!,
+          repository: _repository,
+          searchController: _searchController,
+          searchFocusNode: _searchFocusNode,
+          onNewDrawing: _startNewDrawing,
+          categoriesById: _categoriesById,
+          categoryFilter: _categoryFilter,
+          onOpenCategoryPicker: _openCategoryPicker,
+          onOpen: _resume,
+          onEdit: _edit,
+          onDelete: _confirmDelete,
+        ),
+    };
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: statusBar,
+      child: Scaffold(
+        body: Stack(
+          children: [
+            // `SafeArea` afasta o conteúdo de entalhes, câmeras frontais e
+            // barras do sistema, que variam bastante entre o Galaxy Tab A e
+            // o RedMagic.
+            SafeArea(
+              // `AnimatedSwitcher` faz um fade curto entre os estados. A
+              // transição deixa claro que algo mudou, sem atrasar o usuário.
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: content,
               ),
-            // Primeiro uso (ou histórico vazio): a tela de boas-vindas
-            // grande, com uma única ação. A busca só aparece quando há o
-            // que buscar.
-            _Idle() when !hasHistory =>
-              HomeWelcomeView(onPick: _startNewDrawing),
-            _Idle() => ProjectHistoryList(
-                projects: projects!,
-                repository: _repository,
-                searchController: _searchController,
-                searchFocusNode: _searchFocusNode,
-                onNewDrawing: _startNewDrawing,
-                categoriesById: _categoriesById,
-                categoryFilter: _categoryFilter,
-                onOpenCategoryPicker: _openCategoryPicker,
-                onOpen: _resume,
-                onEdit: _edit,
-                onDelete: _confirmDelete,
+            ),
+            // Botão de sol/lua FLUTUANDO no canto superior direito, por
+            // cima do conteúdo, igual em todos os estados (boas-vindas,
+            // carregando, erro e listagem). Fica FORA do `AnimatedSwitcher`
+            // para não piscar quando a Home troca de estado.
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: ThemeToggleButton(controller: widget.themeController),
+                ),
               ),
-          },
+            ),
+          ],
         ),
       ),
     );
   }
+
 }

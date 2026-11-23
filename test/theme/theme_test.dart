@@ -205,9 +205,6 @@ void main() {
       final screen = tester.getRect(find.byType(Scaffold).first);
       expect(button.top, lessThan(100));
       expect(screen.right - button.right, lessThan(16));
-      // É o último item da barra: nada à direita dele.
-      final categories = tester.getRect(find.byTooltip('Categorias'));
-      expect(button.left, greaterThan(categories.right - 1));
     });
 
     testWidgets('cada toque alterna claro ↔ escuro, animando sol e lua',

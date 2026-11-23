@@ -6,6 +6,8 @@
 // reconstrói só a parte que mudou.
 import 'package:material_ui/material_ui.dart';
 
+import '../../../theme/widgets/desenha_ai_logo.dart';
+
 /// Layout centralizado com largura máxima, reaproveitado pelos estados
 /// vazio/carregando/erro. Num tablet deitado, um texto esticado na largura
 /// toda fica difícil de ler. 480 dp é uma largura confortável.
@@ -34,23 +36,42 @@ class _CenteredMessage extends StatelessWidget {
 }
 
 /// Boas-vindas: aparece quando ainda não há nenhum desenho no histórico.
+///
+/// Fase 6 (Etapa 6B): a marca "Desenha A.I" desenhada fica no centro, e os
+/// botões "Escolher imagem" e "Categorias" ficam LADO A LADO, no mesmo estilo.
 class HomeWelcomeView extends StatelessWidget {
-  const HomeWelcomeView({super.key, required this.onPick});
+  const HomeWelcomeView({
+    super.key,
+    required this.onPick,
+    required this.onOpenCategories,
+  });
 
   final VoidCallback onPick;
+
+  /// Abre a tela de categorias (criar/remover). Sem header (Etapa 6B), este
+  /// é o caminho até ela quando ainda não há desenhos.
+  final VoidCallback onOpenCategories;
+
+  static const pickButtonKey = ValueKey('home-pick-image');
+  static const categoriesButtonKey = ValueKey('home-categories');
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    // Mesmo "molde" para os dois botões: mesma altura e mesmo estilo
+    // preenchido. Lado a lado, nenhum parece "menos importante" por engano.
+    final buttonStyle = FilledButton.styleFrom(
+      minimumSize: const Size(0, 56),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      textStyle: theme.textTheme.titleMedium,
+    );
+
     return _CenteredMessage(
       children: [
-        Icon(
-          Icons.draw_outlined,
-          size: 96,
-          color: theme.colorScheme.primary,
-        ),
-        const SizedBox(height: 24),
+        // A marca no lugar do ícone grande das fases anteriores.
+        const DesenhaAiLogo(height: 72),
+        const SizedBox(height: 28),
         Text(
           'Escolha uma imagem de referência',
           style: theme.textTheme.headlineSmall,
@@ -64,16 +85,36 @@ class HomeWelcomeView extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 32),
-        // Um único botão principal e grande: nesta tela só existe uma ação
-        // possível, então não há o que o usuário precise decidir.
-        FilledButton.icon(
-          onPressed: onPick,
-          icon: const Icon(Icons.photo_library_outlined),
-          label: const Text('Escolher imagem'),
-          style: FilledButton.styleFrom(
-            minimumSize: const Size(220, 56),
-            textStyle: theme.textTheme.titleMedium,
-          ),
+        // `Expanded` nos dois: dividem a largura igualmente e cabem lado a
+        // lado até num celular em pé (~360 dp).
+        Row(
+          children: [
+            Expanded(
+              child: FilledButton.icon(
+                key: pickButtonKey,
+                onPressed: onPick,
+                icon: const Icon(Icons.photo_library_outlined),
+                label: const Text(
+                  'Escolher imagem',
+                  overflow: TextOverflow.ellipsis,
+                ),
+                style: buttonStyle,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FilledButton.icon(
+                key: categoriesButtonKey,
+                onPressed: onOpenCategories,
+                icon: const Icon(Icons.label_outline),
+                label: const Text(
+                  'Categorias',
+                  overflow: TextOverflow.ellipsis,
+                ),
+                style: buttonStyle,
+              ),
+            ),
+          ],
         ),
       ],
     );

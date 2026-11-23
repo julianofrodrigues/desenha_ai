@@ -1,6 +1,7 @@
 // Fase 5 (Etapa 5A): telas de categorias, escolha de categoria no Editar e
 // badge (cor + nome) no card. Tudo com os repositórios FALSOS de fakes.dart.
 import 'package:desenha_ai/app.dart';
+import 'package:desenha_ai/features/image_selection/presentation/widgets/home_status_views.dart';
 import 'package:desenha_ai/features/projects/models/project_category.dart';
 import 'package:desenha_ai/features/projects/screens/categories_screen.dart';
 import 'package:desenha_ai/features/projects/widgets/category_badge.dart';
@@ -234,8 +235,10 @@ void main() {
   });
 
   group('tela de categorias', () {
+    // Etapa 6B: sem header, a tela "Categorias" abre pelo botão ao lado de
+    // "Escolher imagem" (estado sem desenhos).
     Future<void> openCategories(WidgetTester tester) async {
-      await tester.tap(find.byTooltip('Categorias'));
+      await tester.tap(find.byKey(HomeWelcomeView.categoriesButtonKey));
       await settle(tester);
       expect(find.byType(CategoriesScreen), findsOneWidget);
     }
@@ -306,10 +309,18 @@ void main() {
         sampleProject(id: 'c', name: 'rosto.png', categoryId: 'c2'),
       ]);
       final categories = FakeCategoryRepository(initial: [animais, retratos]);
-      await _pumpApp(tester, projects: projects, categories: categories);
-      expect(find.byType(CategoryBadge), findsNWidgets(3));
-
-      await openCategories(tester);
+      // Desde a Etapa 6B, com desenhos na lista, a gestão é pelo seletor da
+      // faixa (testado em category_filter_ui_test.dart). Aqui testamos a
+      // tela "Categorias" diretamente.
+      await tester.pumpWidget(
+        MaterialApp(
+          home: CategoriesScreen(
+            categoryRepository: categories,
+            projectRepository: projects,
+          ),
+        ),
+      );
+      await tester.pump();
       // "Animais" é a primeira (ordem alfabética).
       await tester.tap(find.byTooltip('Remover categoria').first);
       await settle(tester);
@@ -327,9 +338,8 @@ void main() {
         findsOneWidget,
       );
 
-      // De volta à Home: só sobrou a badge de "Retratos".
-      await tester.tap(find.byType(BackButton));
-      await settle(tester);
+      // Na Home: só sobrou a badge de "Retratos".
+      await _pumpApp(tester, projects: projects, categories: categories);
       expect(find.byType(CategoryBadge), findsOneWidget);
       expect(
         find.descendant(of: _badgeOf('rosto.png'), matching: find.text('Retratos')),

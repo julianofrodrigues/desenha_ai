@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../theme/widgets/desenha_ai_logo.dart';
 import '../models/category_filter.dart';
 import '../models/drawing_project.dart';
 import '../models/project_category.dart';
@@ -68,8 +69,18 @@ class ProjectHistoryList extends StatelessWidget {
           // Rolar a lista fecha o teclado da busca.
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           slivers: [
+            // Fase 6 (Etapa 6B): a marca "Desenha A.I" centralizada no topo.
+            // Fica NA LISTA (e rola com ela) em vez de fixa no meio da tela:
+            // fixa, ficaria por cima dos cards. A margem de 56 dp nas
+            // laterais deixa livre o canto do botão de sol/lua.
+            const SliverPadding(
+              padding: EdgeInsets.fromLTRB(56, 12, 56, 4),
+              sliver: SliverToBoxAdapter(
+                child: Center(child: DesenhaAiLogo(height: 44)),
+              ),
+            ),
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               sliver: SliverToBoxAdapter(
                 child: FilledButton.icon(
                   onPressed: onNewDrawing,

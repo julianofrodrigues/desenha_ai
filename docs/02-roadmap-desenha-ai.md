@@ -283,6 +283,18 @@ Detalhes: `docs/07-fase6-tema-e-layout.md`.
 | Botão segue o modo escolhido, e não o `Theme` | Animação imediata; o `Theme` só muda de brilho no meio da transição. |
 | Mesa de Luz e controles do desenho fora do tema | Fazem parte da função de desenhar, não da aparência. |
 
+### Etapa 6B · Home sem header e marca desenhada 🚧 (aguardando testes no aparelho)
+
+- **Header (`AppBar`) removido** da Home: sem título `desenha_ai` e sem o
+  ícone de etiqueta. Tudo abaixo da busca continua igual.
+- **Sol/lua flutuando** no canto superior direito (`Stack` + `SafeArea`),
+  em todos os estados da Home.
+- **Sem imagem:** "Escolher imagem" e "Categorias" (com ícone de etiqueta)
+  lado a lado, no mesmo estilo.
+- **Marca "Desenha A.I"** em letras desenhadas (`CustomPainter`, sem fonte
+  nem imagem): no centro da tela inicial e no topo da listagem.
+- Ícones da barra de status ajustados ao tema (antes era papel da AppBar).
+
 ### Próximas etapas
 
 A definir nos próximos pedidos.
