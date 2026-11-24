@@ -22,6 +22,7 @@ import '../../projects/widgets/edit_project_dialog.dart';
 import '../../projects/widgets/project_history_list.dart';
 import '../../theme/services/theme_controller.dart';
 import '../../theme/widgets/theme_toggle_button.dart';
+import '../data/image_importer.dart';
 import '../data/local_image_source.dart';
 import 'widgets/home_status_views.dart';
 
@@ -46,13 +47,13 @@ final class _Idle extends _ScreenState {
   const _Idle();
 }
 
-/// Abrindo o seletor, copiando a imagem ou lendo um projeto salvo.
+/// Abrindo a galeria, copiando as imagens ou lendo um projeto salvo.
 final class _Busy extends _ScreenState {
   const _Busy(this.message);
   final String message;
 }
 
-/// Falha ao abrir/copiar a imagem escolhida.
+/// Falha ao abrir a galeria ou ao copiar TODAS as imagens escolhidas.
 final class _Failed extends _ScreenState {
   const _Failed(this.message);
   final String message;
@@ -189,50 +190,68 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  /// Novo desenho: escolher imagem → copiar para o app → abrir.
-  Future<void> _startNewDrawing() async {
+  /// Adicionar imagens: galeria (uma ou várias) → copiar cada uma para o
+  /// app → mostrar a LISTAGEM.
+  ///
+  /// Vale tanto para "Escolher imagem" (tela inicial) quanto para "Novo
+  /// desenho" (listagem). NÃO abre a tela de desenho: com várias imagens
+  /// não haveria uma "certa" para abrir, e com uma só o comportamento fica
+  /// igual. O usuário vê o que entrou no histórico e escolhe qual abrir.
+  Future<void> _addImages() async {
     // Proteção contra toque duplo: sem isso, dois seletores poderiam abrir.
     if (_isBusy) return;
-    setState(() => _state = const _Busy('Abrindo imagem…'));
+    _searchFocusNode.unfocus();
+    setState(() => _state = const _Busy('Abrindo galeria…'));
 
-    final PickedImage? image;
+    final List<PickedImage> images;
     try {
-      image = await widget.imageSource.pickImage();
+      images = await widget.imageSource.pickImages();
     } catch (error) {
-      debugPrint('Falha ao escolher imagem: $error');
+      debugPrint('Falha ao abrir a galeria: $error');
       _setStateIfMounted(const _Failed(
-        'Não foi possível abrir a imagem. Tente novamente ou escolha outro '
-        'arquivo.',
+        'Não foi possível abrir a galeria. Tente novamente.',
       ));
       return;
     }
 
-    // Cancelar o seletor não é erro: só volta ao normal.
-    if (image == null) {
+    // Cancelar o seletor não é erro: volta para onde estava.
+    if (images.isEmpty) {
       _setStateIfMounted(const _Idle());
       return;
     }
 
-    _setStateIfMounted(const _Busy('Preparando desenho…'));
-    final DrawingProject project;
-    try {
-      // A cópia acontece ANTES de abrir a tela: se o arquivo original for
-      // apagado da galeria depois, o projeto continua funcionando.
-      project = await _repository.create(
-        originalName: image.name,
-        imageBytes: image.bytes,
-      );
-    } catch (error) {
-      debugPrint('Falha ao criar projeto: $error');
-      _setStateIfMounted(const _Failed(
-        'Não foi possível salvar a imagem no aparelho. Verifique se há '
-        'espaço livre e tente novamente.',
-      ));
+    // A cópia para o armazenamento privado acontece aqui: se o arquivo
+    // original for apagado da galeria depois, o projeto continua
+    // funcionando. Uma imagem por vez (ver `importPickedImages`).
+    final result = await importPickedImages(
+      images,
+      repository: _repository,
+      onProgress: (current, total) => _setStateIfMounted(_Busy(
+        total == 1 ? 'Salvando imagem…' : 'Salvando imagem $current de $total…',
+      )),
+    );
+    if (!mounted) return;
+
+    if (result.allFailed) {
+      setState(() => _state = _Failed(
+            images.length == 1
+                ? 'Não foi possível adicionar a imagem. O arquivo pode estar '
+                    'vazio ou corrompido, ou faltar espaço no aparelho.'
+                : 'Não foi possível adicionar nenhuma das ${images.length} '
+                    'imagens. Os arquivos podem estar vazios ou corrompidos, '
+                    'ou faltar espaço no aparelho.',
+          ));
       return;
     }
 
+    // Uma busca ou um filtro de categoria ativos esconderiam as imagens
+    // novas (que ainda não têm nome customizado nem categoria). Limpamos os
+    // dois para o usuário VER o que acabou de adicionar.
+    _searchController.clear();
+    _categoryFilter.value = CategoryFilter.none;
     _setStateIfMounted(const _Idle());
-    await _openDrawing(project, image.bytes);
+    await _loadHistory();
+    _showMessage(importSummary(result));
   }
 
   /// Continuar um desenho do histórico.
@@ -412,12 +431,12 @@ class _HomePageState extends State<HomePage> {
       _Busy(:final message) => HomeLoadingView(message: message),
       _Failed(:final message) => HomeErrorView(
           message: message,
-          onRetry: _startNewDrawing,
+          onRetry: _addImages,
         ),
       // Primeiro uso (ou histórico vazio): a tela de boas-vindas grande. A
       // busca só aparece quando há o que buscar.
       _Idle() when !hasHistory => HomeWelcomeView(
-          onPick: _startNewDrawing,
+          onPick: _addImages,
           onOpenCategories: _openCategories,
         ),
       _Idle() => ProjectHistoryList(
@@ -425,7 +444,7 @@ class _HomePageState extends State<HomePage> {
           repository: _repository,
           searchController: _searchController,
           searchFocusNode: _searchFocusNode,
-          onNewDrawing: _startNewDrawing,
+          onNewDrawing: _addImages,
           categoriesById: _categoriesById,
           categoryFilter: _categoryFilter,
           onOpenCategoryPicker: _openCategoryPicker,

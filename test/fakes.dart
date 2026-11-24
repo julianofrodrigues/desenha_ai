@@ -16,14 +16,40 @@ import 'package:desenha_ai/features/theme/services/theme_preference_store.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Fonte de imagens falsa: cada chamada a `pickImage` executa [onPick].
+/// Fonte de imagens falsa.
+///
+/// - `FakeImageSource(() async => imagem)`: escolhe UMA imagem (ou `null` =
+///   cancelou). Mantém os testes antigos, de antes da seleção múltipla.
+/// - `FakeImageSource.many(() async => [a, b, c])`: escolhe várias (lista
+///   vazia = cancelou).
 class FakeImageSource implements LocalImageSource {
-  FakeImageSource(this.onPick);
+  FakeImageSource(Future<PickedImage?> Function() onPick)
+      : onPickMany = _single(onPick);
 
-  Future<PickedImage?> Function() onPick;
+  FakeImageSource.many(this.onPickMany);
+
+  Future<List<PickedImage>> Function() onPickMany;
+
+  /// Quantas vezes o seletor foi aberto.
+  int calls = 0;
+
+  /// Troca a próxima escolha por uma imagem só (ou `null` = cancelou).
+  set onPick(Future<PickedImage?> Function() onPick) =>
+      onPickMany = _single(onPick);
+
+  static Future<List<PickedImage>> Function() _single(
+    Future<PickedImage?> Function() onPick,
+  ) =>
+      () async {
+        final image = await onPick();
+        return image == null ? const [] : [image];
+      };
 
   @override
-  Future<PickedImage?> pickImage() => onPick();
+  Future<List<PickedImage>> pickImages() {
+    calls++;
+    return onPickMany();
+  }
 }
 
 /// Câmera falsa: `start` vai direto para o estado escolhido em [onStart],
@@ -102,11 +128,21 @@ class FakeProjectRepository implements ProjectRepository {
   /// Projeto atual guardado (para conferir ajustes salvos).
   DrawingProject? operator [](String id) => _projects[id];
 
+  /// Se devolver `true` para um nome, `create` falha (ex.: disco cheio).
+  bool Function(String originalName)? failCreate;
+
+  /// Nomes passados a `create`, na ordem (inclusive os que falharam).
+  final createCalls = <String>[];
+
   @override
   Future<DrawingProject> create({
     required String originalName,
     required Uint8List imageBytes,
   }) async {
+    createCalls.add(originalName);
+    if (failCreate?.call(originalName) ?? false) {
+      throw const FileSystemException('disco cheio');
+    }
     final now = _tick();
     final project = DrawingProject(
       id: 'p${_nextId++}',

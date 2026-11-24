@@ -343,3 +343,21 @@ A definir nos próximos pedidos.
 - iOS, web e desktop. O código Flutter é portável, mas só testaremos Android.
 - Edição da imagem (filtros, recorte).
 - ❌ Salvar o progresso do traçado: **cancelado** (ver Fase 3).
+
+---
+
+## Seleção múltipla de imagens 🚧 (aguardando testes no aparelho)
+
+Detalhes: `docs/08-selecao-multipla-de-imagens.md`.
+
+- "Escolher imagem" (tela inicial) e "Novo desenho" (listagem) abrem a
+  galeria permitindo marcar **uma ou várias** imagens
+  (`FilePicker.pickFiles`).
+- Cada imagem é copiada para o armazenamento privado e vira um projeto,
+  **uma por vez**, para a memória guardar uma foto de cada vez (Galaxy
+  Tab A).
+- Depois de confirmar, o app mostra a **listagem**, sem abrir a tela de
+  desenho, tanto para uma quanto para várias imagens. A busca e o filtro de
+  categoria são limpos para as novas aparecerem.
+- Cancelar não é erro; uma imagem ruim não impede as outras; se todas
+  falharem, tela de erro com "Tentar novamente".

@@ -78,7 +78,9 @@ class HomeWelcomeView extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Use uma foto ou desenho salvo no aparelho. '
+          // Avisa que dá para escolher VÁRIAS de uma vez: o seletor do
+          // sistema nem sempre deixa isso óbvio.
+          'Escolha uma ou várias fotos e desenhos salvos no aparelho. '
           'Nada é enviado para a internet.',
           style: theme.textTheme.bodyLarge,
           textAlign: TextAlign.center,
@@ -120,7 +122,7 @@ class HomeWelcomeView extends StatelessWidget {
   }
 }
 
-/// Indicador de progresso com uma mensagem ("Abrindo imagem…").
+/// Indicador de progresso com uma mensagem ("Salvando imagem 2 de 5…").
 class HomeLoadingView extends StatelessWidget {
   const HomeLoadingView({super.key, required this.message});
 

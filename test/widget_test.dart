@@ -55,8 +55,8 @@ void main() {
     });
 
     testWidgets(
-        'escolher imagem CRIA o projeto (cópia local) e abre o desenho',
-        (tester) async {
+        'escolher imagem CRIA o projeto (cópia local) e mostra a listagem, '
+        'sem abrir o desenho', (tester) async {
       final completer = Completer<PickedImage?>();
       final repo = FakeProjectRepository();
       await tester.pumpWidget(
@@ -65,19 +65,21 @@ void main() {
 
       await tester.tap(find.text('Escolher imagem'));
       await tester.pump();
-      expect(find.text('Abrindo imagem…'), findsOneWidget);
+      expect(find.text('Abrindo galeria…'), findsOneWidget);
 
       completer.complete(PickedImage(name: 'gato.png', bytes: pngBytes));
       await settle(tester);
 
-      expect(find.byType(DrawingScreen), findsOneWidget);
+      // Desde a seleção múltipla: a listagem, e não a tela de desenho.
+      expect(find.byType(DrawingScreen), findsNothing);
       final projects = await repo.listRecent();
       expect(projects.single.originalName, 'gato.png');
-
-      // Ao voltar, o desenho aparece no histórico.
-      await _goBack(tester);
       expect(find.text('Continuar desenhando'), findsOneWidget);
       expect(find.text('gato.png'), findsOneWidget);
+      expect(
+        find.text('"gato.png" foi adicionada ao histórico.'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('cancelar o seletor não cria projeto nem mostra erro',
@@ -110,7 +112,8 @@ void main() {
           () async => PickedImage(name: 'flor.jpg', bytes: pngBytes);
       await tester.tap(find.text('Tentar novamente'));
       await settle(tester);
-      expect(find.byType(DrawingScreen), findsOneWidget);
+      expect(find.byType(DrawingScreen), findsNothing);
+      expect(find.text('flor.jpg'), findsOneWidget);
     });
 
     testWidgets('tela fica acesa só enquanto a tela de desenho está aberta',
@@ -120,6 +123,11 @@ void main() {
       expect(wakeLock.enabled, isFalse); // Home: tela apaga normalmente
 
       await tester.tap(find.text('Escolher imagem'));
+      await settle(tester);
+      // Na listagem (sem abrir o desenho), a tela continua apagando.
+      expect(wakeLock.enabled, isFalse);
+
+      await tester.tap(find.text('gato.png'));
       await settle(tester);
       expect(wakeLock.enabled, isTrue);
 
