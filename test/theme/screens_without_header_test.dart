@@ -177,8 +177,8 @@ void main() {
           'Filtrar por categoria');
     });
 
-    testWidgets('"Limpar" e "Adicionar categoria" abaixo da pesquisa, à '
-        'direita', (tester) async {
+    testWidgets('"Limpar" e "Adicionar categoria" abaixo da pesquisa',
+        (tester) async {
       await _openPicker(tester);
       final screen = tester.getSize(find.byType(CategoryFilterScreen));
       final search = tester.getRect(_inPicker(find.byType(TextField)));
@@ -187,13 +187,10 @@ void main() {
 
       expect(clear.top, greaterThan(search.bottom));
       expect(add.top, greaterThan(search.bottom));
-      // Alinhados à DIREITA: "Adicionar" encostado na margem direita e
-      // "Limpar" logo à esquerda dele, na mesma linha. (Não medimos "metade
-      // da tela": a fonte dos testes é mais larga que a do aparelho.)
+      // "Adicionar" encostado na margem direita. (O "Limpar" passou para a
+      // esquerda depois da 6F: ver category_filter_actions_test.dart.)
       expect(add.right, closeTo(screen.width - 16, 1));
-      expect(add.left - clear.right, closeTo(8, 0.5));
       expect(clear.center.dy, closeTo(add.center.dy, 1));
-      expect(clear.left, greaterThan(16));
 
       // Mesmo molde dos botões da tela sem imagem: 56 dp de altura.
       expect(add.height, 56);

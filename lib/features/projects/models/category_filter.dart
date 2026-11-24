@@ -45,6 +45,30 @@ class CategoryFilter {
     );
   }
 
+  /// Marca TODAS as categorias de [ids], mantendo o que já estava marcado
+  /// (outras categorias e "Sem categoria").
+  ///
+  /// "Selecionar todas" (seletor de categorias) passa aqui só as categorias
+  /// EXIBIDAS: com a pesquisa vazia são todas; com texto, só as que batem.
+  /// Somar (e não substituir) evita que pesquisar "ani" e tocar em
+  /// "Selecionar todas" desmarque, sem aviso, uma categoria marcada antes e
+  /// escondida pela pesquisa.
+  ///
+  /// Se nada mudar, devolve a MESMA instância: quem chama pode pular o
+  /// `setState`.
+  CategoryFilter selectAll(Iterable<String> ids) {
+    final merged = {...categoryIds, ...ids};
+    if (merged.length == categoryIds.length) return this;
+    return CategoryFilter(
+      categoryIds: Set.unmodifiable(merged),
+      includeUncategorized: includeUncategorized,
+    );
+  }
+
+  /// Todas as categorias de [ids] já estão marcadas? (Desabilita o
+  /// "Selecionar todas" quando não há o que marcar.)
+  bool containsAll(Iterable<String> ids) => ids.every(categoryIds.contains);
+
   CategoryFilter toggleUncategorized() => CategoryFilter(
         categoryIds: categoryIds,
         includeUncategorized: !includeUncategorized,

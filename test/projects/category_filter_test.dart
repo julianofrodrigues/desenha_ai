@@ -62,6 +62,36 @@ void main() {
       // Nada a tirar: devolve o mesmo objeto (o notifier não dispara).
       expect(identical(kept.retainOnly(['c1']), kept), isTrue);
     });
+
+    test('selectAll marca todas as categorias passadas', () {
+      final f = CategoryFilter.none.selectAll(['c1', 'c2', 'c3']);
+      expect(f.categoryIds, {'c1', 'c2', 'c3'});
+      expect(f.includeUncategorized, isFalse);
+      expect(f.count, 3);
+    });
+
+    test('selectAll SOMA: não desmarca categorias nem "Sem categoria"', () {
+      // c3 marcada antes e "escondida" pela pesquisa continua marcada.
+      final before =
+          CategoryFilter.none.toggleCategory('c3').toggleUncategorized();
+      final f = before.selectAll(['c1', 'c2']);
+      expect(f.categoryIds, {'c1', 'c2', 'c3'});
+      expect(f.includeUncategorized, isTrue);
+    });
+
+    test('selectAll sem nada novo devolve a mesma instância', () {
+      final f = CategoryFilter.none.selectAll(['c1', 'c2']);
+      expect(identical(f.selectAll(['c2', 'c1']), f), isTrue);
+      expect(identical(f.selectAll(const []), f), isTrue);
+    });
+
+    test('containsAll diz se todas as exibidas já estão marcadas', () {
+      final f = CategoryFilter.none.selectAll(['c1', 'c2']);
+      expect(f.containsAll(['c1']), isTrue);
+      expect(f.containsAll(['c1', 'c2']), isTrue);
+      expect(f.containsAll(['c1', 'c3']), isFalse);
+      expect(f.containsAll(const []), isTrue);
+    });
   });
 
   group('filtro combinado (categorias + busca)', () {

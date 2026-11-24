@@ -629,3 +629,77 @@ centralizada como antes.
    pesquisa.
 3. Tela de desenho: o sol/lua aparece ao lado do cadeado e some ao travar.
 4. Home com desenhos: a marca fica cerca de 30 dp abaixo do sol/lua.
+
+## 10. Seletor de categorias: "Limpar" à esquerda e "Selecionar todas"
+
+Ajustes no seletor "Filtrar por categoria" (`category_filter_screen.dart`),
+depois da Etapa 6F.
+
+### 10.1 "Limpar" na esquerda, no mesmo molde do "Adicionar"
+Na linha abaixo da pesquisa, "Limpar" fica na margem ESQUERDA e
+"Adicionar categoria" na DIREITA. Na 6F os dois ficavam juntos à direita.
+
+- **Por que separar:** com os dois nas pontas, um toque destinado a um não
+  acerta o outro, e a ação que desfaz (limpar) fica longe da que cria.
+- **Mesmo molde:** os dois têm 56 dp de altura, texto `titleMedium`, o mesmo
+  recuo e os mesmos cantos do tema. "Adicionar" é preenchido
+  (`largeButtonStyle`) e "Limpar" é contornado (`largeOutlinedButtonStyle`,
+  novo em `lib/core/widgets/large_button_style.dart`). Assim os dois
+  combinam, mas a ação principal continua em destaque.
+- **Comportamento igual:** "Limpar" desmarca tudo no rascunho, como antes, e
+  fica desabilitado quando não há nada marcado. A pesquisa não é apagada.
+- **Celular estreito:** a linha é uma `Row` com `Flexible` no "Adicionar". Se
+  faltar espaço, o texto dele ganha "…" em vez de dar overflow, e um vão
+  mínimo de 16 dp separa os dois.
+
+### 10.2 "Selecionar todas" logo abaixo de "Sem categoria"
+Uma linha da lista, com o mesmo alvo de toque das opções ao redor, entre
+"Sem categoria" e as categorias.
+
+| Situação | O que o toque faz | Subtítulo |
+| --- | --- | --- |
+| Pesquisa vazia | marca TODAS as categorias | "Marca todas as categorias" |
+| Pesquisa com texto | marca só as categorias EXIBIDAS | "Marca as N categorias da pesquisa" (ou "a categoria", se for uma) |
+| Todas as exibidas já marcadas | nada (a linha fica desabilitada) | o mesmo |
+| Nenhuma categoria exibida | a linha não aparece | (nada) |
+
+Regras:
+- **Soma, nunca desmarca.** Uma categoria marcada antes e escondida pela
+  pesquisa continua marcada. "Sem categoria" também não muda: é uma opção
+  separada, com a sua própria caixa.
+- **Rascunho:** como as outras marcações, só vale para o histórico depois de
+  "Aplicar".
+
+A lógica está no modelo (`CategoryFilter.selectAll` e `containsAll`), que é
+puro e tem teste de unidade. Quando nada muda, `selectAll` devolve a MESMA
+instância, e a tela pula o `setState`: um toque sem efeito não reconstrói
+nada.
+
+### 10.3 Testes
+- `test/projects/category_filter_test.dart` (unidade): `selectAll` marca
+  todas; soma sem desmarcar categorias nem "Sem categoria"; devolve a mesma
+  instância quando nada muda; `containsAll`.
+- `test/projects/category_filter_actions_test.dart` (widget, novo):
+  - "Limpar" a 16 dp da margem esquerda e "Adicionar" a 16 dp da direita, na
+    mesma linha, com pelo menos 16 dp entre eles;
+  - "Limpar" é `OutlinedButton`, "Adicionar" é `FilledButton`, os dois com
+    56 dp e o mesmo tamanho mínimo, recuo e fonte;
+  - "Limpar" continua desmarcando tudo e fica desabilitado sem seleção;
+  - "Selecionar todas" encosta na base de "Sem categoria" e vem antes da
+    primeira categoria;
+  - sem pesquisa, marca as 3 categorias (e não "Sem categoria"), fica
+    desabilitado e, aplicado, mostra só os desenhos com categoria;
+  - com a pesquisa "ais", marca Animais e Paisagens e mantém Retratos se ela
+    já estava marcada (ou a deixa de fora se não estava);
+  - subtítulo no singular com uma categoria; some sem categorias ou com
+    pesquisa sem resultado.
+- `test/theme/screens_without_header_test.dart`: o teste da 6F deixou de
+  exigir "Limpar" colado no "Adicionar".
+
+### 10.4 Como testar no aparelho
+1. Abra o seletor: "Limpar" na esquerda, "Adicionar categoria" na direita,
+   do mesmo tamanho.
+2. Toque em "Selecionar todas": todas as categorias ficam marcadas e o
+   "Aplicar" mostra a contagem.
+3. Pesquise parte de um nome e toque em "Selecionar todas": só as exibidas
+   são marcadas; ao apagar a pesquisa, as marcadas antes continuam.

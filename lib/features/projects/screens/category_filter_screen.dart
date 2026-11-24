@@ -69,6 +69,7 @@ class CategoryFilterScreen extends StatefulWidget {
   static const applyButtonKey = ValueKey('category-filter-apply');
   static const clearButtonKey = ValueKey('category-filter-clear');
   static const addButtonKey = ValueKey('category-filter-add');
+  static const selectAllKey = ValueKey('category-filter-select-all');
 
   @override
   State<CategoryFilterScreen> createState() => _CategoryFilterScreenState();
@@ -114,6 +115,14 @@ class _CategoryFilterScreenState extends State<CategoryFilterScreen> {
       // Uma categoria marcada que não existe mais sai do rascunho.
       _draft = _draft.retainOnly(categories.map((c) => c.id));
     });
+  }
+
+  /// "Selecionar todas": marca as categorias exibidas, sem desmarcar nada.
+  void _selectAll(List<ProjectCategory> visible) {
+    final next = _draft.selectAll(visible.map((c) => c.id));
+    // Mesma instância = já estava tudo marcado: nada a reconstruir.
+    if (identical(next, _draft)) return;
+    setState(() => _draft = next);
   }
 
   Future<void> _create() async {
@@ -247,6 +256,7 @@ class _CategoryFilterScreenState extends State<CategoryFilterScreen> {
                 onToggle: (c) => setState(
                   () => _draft = _draft.toggleCategory(c.id),
                 ),
+                onSelectAll: _selectAll,
                 onEdit: _edit,
                 onRemove: _remove,
                 onCreate: _create,
@@ -288,6 +298,7 @@ class _CategoryOptions extends StatelessWidget {
     required this.busy,
     required this.onToggleUncategorized,
     required this.onToggle,
+    required this.onSelectAll,
     required this.onEdit,
     required this.onRemove,
     required this.onCreate,
@@ -299,6 +310,9 @@ class _CategoryOptions extends StatelessWidget {
   final bool busy;
   final VoidCallback onToggleUncategorized;
   final ValueChanged<ProjectCategory> onToggle;
+
+  /// Marca as categorias EXIBIDAS (todas, ou as que passam na pesquisa).
+  final ValueChanged<List<ProjectCategory>> onSelectAll;
   final ValueChanged<ProjectCategory> onEdit;
   final ValueChanged<ProjectCategory> onRemove;
   final VoidCallback onCreate;
@@ -351,7 +365,20 @@ class _CategoryOptions extends StatelessWidget {
             title: const Text(uncategorizedLabel),
             subtitle: const Text('Desenhos sem categoria'),
           ),
-        if (showUncategorized && visible.isNotEmpty) const Divider(height: 1),
+        // Logo abaixo de "Sem categoria". Só aparece se há categorias
+        // exibidas (sem nenhuma, não haveria o que marcar).
+        if (visible.isNotEmpty)
+          _SelectAllOption(
+            visibleCount: visible.length,
+            filtered: key.isNotEmpty,
+            // Desabilitado quando todas as exibidas já estão marcadas: o
+            // toque não faria nada, e o visual mostra isso.
+            enabled: !draft.containsAll(visible.map((c) => c.id)),
+            onSelectAll: () => onSelectAll(visible),
+          ),
+        // Separa as opções gerais ("Sem categoria", "Selecionar todas") das
+        // categorias.
+        if (visible.isNotEmpty) const Divider(height: 1),
         for (final category in visible)
           _CategoryOption(
             key: ValueKey(category.id),
@@ -394,13 +421,20 @@ class _CategoryOptions extends StatelessWidget {
   }
 }
 
-/// Linha logo abaixo da pesquisa (Etapa 6F): "Limpar" e "Adicionar
-/// categoria", os dois à DIREITA.
+/// Linha logo abaixo da pesquisa: "Limpar" na ESQUERDA e "Adicionar
+/// categoria" na DIREITA (antes, na 6F, os dois ficavam juntos à direita).
 ///
-/// "Adicionar categoria" usa o mesmo molde dos botões da tela sem imagem
-/// ([largeButtonStyle]); "Limpar" tem a mesma altura, mas é só texto, porque
-/// é uma ação secundária. `Wrap` (e não `Row`): num celular estreito, se os
-/// dois não couberem lado a lado, o segundo desce em vez de dar overflow.
+/// Separados nas pontas, um toque destinado a um não acerta o outro, e a
+/// ação que DESFAZ (limpar) fica longe da que CRIA.
+///
+/// Os dois usam o mesmo molde (56 dp, texto `titleMedium`, mesmo recuo e
+/// cantos): "Adicionar" preenchido ([largeButtonStyle]) e "Limpar"
+/// contornado ([largeOutlinedButtonStyle]), para a ação principal continuar
+/// em destaque.
+///
+/// `Row` + `Flexible` no "Adicionar": num celular estreito, ele encolhe (o
+/// texto ganha "…") em vez de dar overflow. O `Padding` à esquerda dele
+/// garante um vão mínimo de 16 dp entre os dois.
 class _FilterActions extends StatelessWidget {
   const _FilterActions({
     required this.canClear,
@@ -419,30 +453,77 @@ class _FilterActions extends StatelessWidget {
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      child: Wrap(
-        alignment: WrapAlignment.end,
-        spacing: 8,
-        runSpacing: 8,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          TextButton.icon(
+          OutlinedButton.icon(
             key: CategoryFilterScreen.clearButtonKey,
+            // Mesma ação de antes: desmarca tudo no rascunho.
             onPressed: canClear ? onClear : null,
             icon: const Icon(Icons.clear_all),
             label: const Text('Limpar'),
-            style: TextButton.styleFrom(
-              minimumSize: const Size(0, 56),
-              textStyle: theme.textTheme.titleMedium,
-            ),
+            style: largeOutlinedButtonStyle(theme),
           ),
-          FilledButton.icon(
-            key: CategoryFilterScreen.addButtonKey,
-            onPressed: busy ? null : onAdd,
-            icon: const Icon(Icons.add),
-            label: const Text('Adicionar categoria'),
-            style: largeButtonStyle(theme),
+          Flexible(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 16),
+              child: FilledButton.icon(
+                key: CategoryFilterScreen.addButtonKey,
+                onPressed: busy ? null : onAdd,
+                icon: const Icon(Icons.add),
+                label: const Text(
+                  'Adicionar categoria',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                style: largeButtonStyle(theme),
+              ),
+            ),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// "Selecionar todas", logo abaixo de "Sem categoria".
+///
+/// Marca as categorias EXIBIDAS: com a pesquisa vazia, todas; com texto, só
+/// as que batem com ela. O subtítulo diz qual dos dois casos vale, para o
+/// usuário não achar que marcou categorias que nem está vendo. Nunca
+/// desmarca nada (nem "Sem categoria"): ver [CategoryFilter.selectAll].
+///
+/// É uma linha da lista (e não um botão solto) para seguir o mesmo ritmo e
+/// alvo de toque das opções ao redor.
+class _SelectAllOption extends StatelessWidget {
+  const _SelectAllOption({
+    required this.visibleCount,
+    required this.filtered,
+    required this.enabled,
+    required this.onSelectAll,
+  });
+
+  final int visibleCount;
+
+  /// Há texto na pesquisa (nem todas as categorias estão na lista)?
+  final bool filtered;
+  final bool enabled;
+  final VoidCallback onSelectAll;
+
+  @override
+  Widget build(BuildContext context) {
+    final subtitle = switch ((filtered, visibleCount)) {
+      (false, _) => 'Marca todas as categorias',
+      (true, 1) => 'Marca a categoria da pesquisa',
+      (true, final n) => 'Marca as $n categorias da pesquisa',
+    };
+    return ListTile(
+      key: CategoryFilterScreen.selectAllKey,
+      enabled: enabled,
+      onTap: onSelectAll,
+      leading: const Icon(Icons.done_all),
+      title: const Text('Selecionar todas'),
+      subtitle: Text(subtitle),
     );
   }
 }
