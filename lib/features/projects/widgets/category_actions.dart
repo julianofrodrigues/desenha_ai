@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import '../models/project_category.dart';
 import '../services/category_repository.dart';
 import '../services/project_repository.dart';
+import 'category_form_dialog.dart';
 
 /// Ações de categoria usadas em MAIS de um lugar: a tela "Categorias"
 /// (Etapa 5A) e o seletor de filtro (Etapa 5B). Ficam num arquivo só para as
@@ -50,6 +51,50 @@ Future<int> removeCategoryAndUnlink(
 }) async {
   await categories.delete(category);
   return projects.clearCategory(category.id);
+}
+
+/// Fluxo completo de EDITAR uma categoria (Etapa 6D): abre o formulário com
+/// o nome e a cor atuais e grava a alteração.
+///
+/// Devolve a mensagem para mostrar ao usuário, ou `null` se ele cancelou ou
+/// não mudou nada. Usado pela tela "Categorias" e pelo seletor da faixa, para
+/// as duas terem exatamente o mesmo comportamento.
+///
+/// Os desenhos guardam só o ID da categoria (docs/06, 1.3). Por isso basta
+/// gravar a categoria: quando a Home recarrega, todos os cards vinculados já
+/// mostram o nome e a cor novos, sem reescrever nenhum projeto.
+Future<String?> editCategory(
+  BuildContext context, {
+  required ProjectCategory category,
+  required List<ProjectCategory> all,
+  required CategoryRepository categories,
+}) async {
+  final draft = await showCategoryFormDialog(
+    context,
+    existing: all,
+    editing: category,
+  );
+  if (draft == null) return null; // cancelou
+  if (draft.name == category.name && draft.colorValue == category.colorValue) {
+    return null; // nada mudou: não grava
+  }
+  try {
+    final updated = await categories.update(
+      category,
+      name: draft.name,
+      colorValue: draft.colorValue,
+    );
+    return 'Categoria "${updated.name}" atualizada.';
+  } on CategoryValidationException catch (e) {
+    // Raro (o formulário já valida), mas a lista pode ter mudado enquanto o
+    // diálogo estava aberto.
+    return e.error.message;
+  } on CategoryNotFoundException {
+    return 'Esta categoria não existe mais.';
+  } catch (error) {
+    debugPrint('Falha ao editar categoria ${category.id}: $error');
+    return 'Não foi possível salvar a categoria.';
+  }
 }
 
 /// Texto da mensagem depois de remover.

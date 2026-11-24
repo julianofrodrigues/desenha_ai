@@ -135,6 +135,23 @@ class _CategoryFilterScreenState extends State<CategoryFilterScreen> {
     if (mounted) setState(() => _busy = false);
   }
 
+  /// Editar nome e cor (Etapa 6D). Se a categoria estiver marcada no
+  /// filtro, continua marcada: o id não muda.
+  Future<void> _edit(ProjectCategory category) async {
+    if (_busy) return;
+    _searchFocusNode.unfocus();
+    setState(() => _busy = true);
+    final message = await editCategory(
+      context,
+      category: category,
+      all: _categories ?? const [],
+      categories: widget.categoryRepository,
+    );
+    if (message != null) _showMessage(message);
+    await _load();
+    if (mounted) setState(() => _busy = false);
+  }
+
   Future<void> _remove(ProjectCategory category) async {
     if (_busy) return;
     _searchFocusNode.unfocus();
@@ -217,6 +234,7 @@ class _CategoryFilterScreenState extends State<CategoryFilterScreen> {
                   onToggle: (c) => setState(
                     () => _draft = _draft.toggleCategory(c.id),
                   ),
+                  onEdit: _edit,
                   onRemove: _remove,
                   onCreate: _create,
                 ),
@@ -258,6 +276,7 @@ class _CategoryOptions extends StatelessWidget {
     required this.busy,
     required this.onToggleUncategorized,
     required this.onToggle,
+    required this.onEdit,
     required this.onRemove,
     required this.onCreate,
   });
@@ -268,6 +287,7 @@ class _CategoryOptions extends StatelessWidget {
   final bool busy;
   final VoidCallback onToggleUncategorized;
   final ValueChanged<ProjectCategory> onToggle;
+  final ValueChanged<ProjectCategory> onEdit;
   final ValueChanged<ProjectCategory> onRemove;
   final VoidCallback onCreate;
 
@@ -321,6 +341,7 @@ class _CategoryOptions extends StatelessWidget {
             selected: draft.isSelected(category.id),
             busy: busy,
             onToggle: () => onToggle(category),
+            onEdit: () => onEdit(category),
             onRemove: () => onRemove(category),
           ),
         if (canCreate)
@@ -361,6 +382,7 @@ class _CategoryOption extends StatelessWidget {
     required this.selected,
     required this.busy,
     required this.onToggle,
+    required this.onEdit,
     required this.onRemove,
   });
 
@@ -368,6 +390,7 @@ class _CategoryOption extends StatelessWidget {
   final bool selected;
   final bool busy;
   final VoidCallback onToggle;
+  final VoidCallback onEdit;
   final VoidCallback onRemove;
 
   @override
@@ -389,10 +412,21 @@ class _CategoryOption extends StatelessWidget {
           ),
         ],
       ),
-      trailing: IconButton(
-        tooltip: 'Remover categoria',
-        onPressed: busy ? null : onRemove,
-        icon: const Icon(Icons.delete_outline),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Etapa 6D: editar à esquerda do remover (mesma ordem dos cards).
+          IconButton(
+            tooltip: 'Editar categoria',
+            onPressed: busy ? null : onEdit,
+            icon: const Icon(Icons.edit_outlined),
+          ),
+          IconButton(
+            tooltip: 'Remover categoria',
+            onPressed: busy ? null : onRemove,
+            icon: const Icon(Icons.delete_outline),
+          ),
+        ],
       ),
     );
   }

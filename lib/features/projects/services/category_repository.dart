@@ -20,4 +20,17 @@ abstract interface class CategoryRepository {
   /// Remove a categoria. NÃO mexe nos projetos: quem chama limpa o vínculo
   /// com `ProjectRepository.clearCategory` (ver docs/06).
   Future<void> delete(ProjectCategory category);
+
+  /// Muda o nome e a cor de uma categoria existente (Etapa 6D). O `id` não
+  /// muda, então os projetos vinculados passam a mostrar o nome e a cor
+  /// novos SEM precisar regravar nenhum projeto.
+  ///
+  /// Lança [CategoryValidationException] se o nome for vazio, longo demais
+  /// ou igual ao de OUTRA categoria, e [CategoryNotFoundException] se a
+  /// categoria foi removida. Devolve a categoria atualizada.
+  Future<ProjectCategory> update(
+    ProjectCategory category, {
+    required String name,
+    required int colorValue,
+  });
 }

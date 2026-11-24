@@ -69,6 +69,37 @@ class FileCategoryRepository implements CategoryRepository {
   }
 
   @override
+  Future<ProjectCategory> update(
+    ProjectCategory category, {
+    required String name,
+    required int colorValue,
+  }) {
+    return _serialized(() async {
+      // Parte do que está no DISCO (como o `updateDetails` dos projetos): a
+      // lista da tela pode estar desatualizada.
+      final categories = await _read();
+      final index = categories.indexWhere((c) => c.id == category.id);
+      if (index < 0) throw CategoryNotFoundException(category.id);
+
+      final error =
+          validateCategoryName(name, categories, exceptId: category.id);
+      if (error != null) throw CategoryValidationException(error);
+
+      final updated = ProjectCategory(
+        id: category.id, // o id NUNCA muda: é ele que os projetos guardam
+        name: name.trim(),
+        colorValue: colorValue | 0xFF000000,
+      );
+      // Nada mudou: evita uma gravação inútil na memória flash.
+      if (updated != categories[index]) {
+        categories[index] = updated;
+        await _write(categories);
+      }
+      return updated;
+    });
+  }
+
+  @override
   Future<void> delete(ProjectCategory category) {
     return _serialized(() async {
       final categories = await _read();

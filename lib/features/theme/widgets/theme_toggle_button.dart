@@ -23,6 +23,14 @@ class ThemeToggleButton extends StatefulWidget {
 
   static const duration = Duration(milliseconds: 350);
 
+  /// Área de toque do botão. Etapa 6C: 56 dp (era 48 dp, o padrão do
+  /// `IconButton`), mais confortável para o polegar no RedMagic e para
+  /// acertar sem olhar no Tab A apoiado na mesa.
+  static const double size = 56;
+
+  /// Tamanho do sol/da lua. Etapa 6C: 30 dp (era 24 dp).
+  static const double iconSize = 30;
+
   @override
   State<ThemeToggleButton> createState() => _ThemeToggleButtonState();
 }
@@ -137,8 +145,15 @@ class _ThemeToggleButtonState extends State<ThemeToggleButton>
       // de tela e para a dica ao segurar o dedo.
       tooltip: _isDark ? 'Ativar modo claro' : 'Ativar modo escuro',
       onPressed: _toggle,
+      // Etapa 6C: maior, para o toque ficar mais confortável (o padrão do
+      // IconButton é um ícone de 24 dp numa área de 48 dp).
+      iconSize: ThemeToggleButton.iconSize,
+      constraints: const BoxConstraints.tightFor(
+        width: ThemeToggleButton.size,
+        height: ThemeToggleButton.size,
+      ),
       icon: SizedBox.square(
-        dimension: 24,
+        dimension: ThemeToggleButton.iconSize,
         child: Stack(
           alignment: Alignment.center,
           children: [

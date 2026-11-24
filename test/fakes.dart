@@ -222,6 +222,30 @@ class FakeCategoryRepository implements CategoryRepository {
     _categories.removeWhere((c) => c.id == category.id);
     deleted.add(category.id);
   }
+
+  /// Cada `update` feito (para os testes conferirem).
+  final updates = <ProjectCategory>[];
+
+  @override
+  Future<ProjectCategory> update(
+    ProjectCategory category, {
+    required String name,
+    required int colorValue,
+  }) async {
+    final index = _categories.indexWhere((c) => c.id == category.id);
+    if (index < 0) throw CategoryNotFoundException(category.id);
+    final error =
+        validateCategoryName(name, _categories, exceptId: category.id);
+    if (error != null) throw CategoryValidationException(error);
+    final updated = ProjectCategory(
+      id: category.id,
+      name: name.trim(),
+      colorValue: colorValue,
+    );
+    _categories[index] = updated;
+    updates.add(updated);
+    return updated;
+  }
 }
 
 /// Categoria de exemplo para testes.

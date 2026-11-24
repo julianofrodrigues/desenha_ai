@@ -11,6 +11,8 @@ Ela foi dividida em etapas:
   badge.
 - **Etapa 5B** (seção 9): faixa de categorias abaixo da busca, seletor com
   pesquisa e seleção múltipla, e filtro combinado com a busca.
+- **Etapa 6D** (seção 10, parte do redesign da Fase 6): editar nome e cor
+  de categorias existentes e paleta de 30 cores.
 
 A Etapa 5A cobre:
 
@@ -442,3 +444,130 @@ seletor usam o mesmo código, com o mesmo texto e a mesma ordem segura.
    ficam sem badge.
 6. No celular deitado, abra o seletor com o teclado aberto: a lista deve
    rolar sem cortar o botão "Aplicar".
+
+---
+
+## 10. Etapa 6D: editar categorias e paleta de 30 cores
+
+> A Etapa 6D faz parte da Fase 6 (docs/07), mas é documentada aqui porque
+> muda as **categorias**.
+
+### 10.1 Botão Editar nas categorias
+
+Cada categoria ganhou um **lápis** ("Editar categoria") à **esquerda** da
+lixeira, nas duas telas que gerenciam categorias:
+
+| Tela | Quando aparece |
+| --- | --- |
+| **Categorias** (`CategoriesScreen`) | botão "Categorias" da tela inicial (sem desenhos) |
+| **Filtrar por categoria** (`CategoryFilterScreen`) | botão "Categorias" da faixa abaixo da busca (com desenhos) |
+
+As duas usam a **mesma** função, `editCategory` (`category_actions.dart`),
+com o mesmo formulário, as mesmas mensagens e a mesma validação.
+
+### 10.2 O formulário de edição
+
+É o **mesmo** `CategoryFormDialog` da criação, em modo edição (`editing:`):
+
+| | Criar | Editar |
+| --- | --- | --- |
+| título | "Nova categoria" | "Editar categoria" |
+| botão | "Criar" | "Salvar" |
+| nome inicial | vazio (ou o texto da pesquisa, 5B) | o nome atual |
+| cor inicial | a primeira cor ainda não usada | a cor atual |
+| teclado abre sozinho | sim | não (muitas vezes só se troca a cor, e o teclado cobriria a paleta) |
+
+Validação do nome ao editar (`validateCategoryName(..., exceptId:)`):
+
+| Digitado | Resultado |
+| --- | --- |
+| vazio ou só espaços | "Digite um nome para a categoria." |
+| nome de **outra** categoria (sem maiúsculas/acentos) | "Já existe uma categoria com esse nome." |
+| o **próprio** nome, ou só mudando maiúsculas ("animais" → "Animais") | permitido |
+| mesmo nome e mesma cor | não grava nada |
+| Cancelar | nada muda |
+
+### 10.3 Gravação e reflexo nos cards
+
+```dart
+// file_category_repository.dart
+Future<ProjectCategory> update(ProjectCategory category, {name, colorValue})
+```
+
+- Relê o `categories.json` do **disco** dentro da fila de escritas, valida
+  de novo (a última barreira) e grava de forma **atômica**, como as outras
+  operações.
+- O **`id` nunca muda**. Isso é o que faz a edição ser barata e segura:
+
+> Os desenhos guardam só o `categoryId` (seção 1.3). Editar a categoria
+> grava **um** arquivo (`categories.json`) e **nenhum** projeto. Quando a
+> Home recarrega (ela sempre recarrega ao fechar as telas de categoria), o
+> mapa `categoriesById` já traz o nome e a cor novos, e **todos** os cards
+> vinculados mostram a badge atualizada.
+
+Outros efeitos, todos de graça pelo mesmo motivo:
+
+- a categoria **continua marcada** no filtro (o filtro guarda ids);
+- a etiqueta da faixa (5B) aparece com o nome e a cor novos;
+- os chips do diálogo "Editar desenho" (5A) também.
+
+Erros previstos:
+
+| Situação | Mensagem |
+| --- | --- |
+| a lista mudou e o nome virou duplicado | a mesma do formulário |
+| a categoria foi removida (`CategoryNotFoundException`) | "Esta categoria não existe mais." |
+| falha de disco | "Não foi possível salvar a categoria." |
+
+### 10.4 Paleta de 30 cores
+
+As **12 primeiras** são as da Etapa 5A, na **mesma ordem e valor**:
+categorias já criadas não mudam de cor. As **18 novas** vêm em grupos:
+
+| Família | Cores |
+| --- | --- |
+| 5A (originais) | Vermelho, Rosa, Roxo, Anil, Azul, Ciano, Verde-azulado, Verde, Lima, Âmbar, Laranja, Marrom |
+| vermelhos, rosas e laranjas | Vinho, Rosa-claro, Salmão, Pêssego, Terracota |
+| roxos | Magenta, Lavanda, Violeta |
+| azuis | Azul-cobalto, Azul-céu, Azul-aço |
+| verdes | Menta, Verde-escuro, Verde-maçã, Oliva |
+| amarelos e neutros | Dourado, Areia, Grafite |
+
+**Garantias, por teste** (`test/projects/category_palette_test.dart`):
+
+- exatamente **30** cores, todas diferentes, com nomes únicos e opacas;
+- **contraste > 1,5** contra o card do tema **claro** e do **escuro**: são
+  tons médios, nada perto do branco nem do preto, então a bolinha da badge
+  nunca some (o **texto** da badge usa a cor do tema, seção 5);
+- **bem distribuídas**: nenhum par de cores fica a menos de 35 de distância
+  no espaço RGB (o teste mostra o par mais próximo se falhar).
+
+**Leveza na tela:**
+
+- grade com **largura fixa**: 5 colunas no celular e 6 no tablet. Uma `Wrap`
+  solta faria o `AlertDialog`, que mede a largura "natural" do conteúdo,
+  somar as 30 bolinhas numa linha e esticar até a borda da tela no tablet;
+- 30 bolinhas simples (`InkWell` + círculo), sem rolagem própria e sem
+  pacote de seletor de cor; o diálogo inteiro rola se faltar altura;
+- o "check" da cor escolhida fica **escuro nas cores claras** (Pêssego,
+  Azul-céu...) e branco nas escuras.
+
+### 10.5 Testes
+
+| Arquivo | O que cobre |
+| --- | --- |
+| `test/projects/category_palette_test.dart` | 30 cores únicas e opacas, as 12 da 5A preservadas, contraste nos dois modos, distância mínima; `validateCategoryName` com `exceptId`; `FileCategoryRepository.update` (grava e relê com "app novo", só cor, só maiúsculas, recusa vazio/duplicado sem gravar, categoria removida) |
+| `test/projects/category_edit_ui_test.dart` | lápis à esquerda da lixeira; formulário com nome e cor atuais; salvar muda lista e armazenamento; duplicado recusado com diálogo aberto; só a cor; cancelar/sem mudança não grava; as 30 cores ao criar e editar; grade compacta no tablet e 5 colunas em 360 dp; editar pelo seletor atualiza a badge dos cards (nome + cor), mantém o filtro e não regrava nenhum projeto; editar pela tela "Categorias" |
+
+### 10.6 Como testar no aparelho
+
+1. Com desenhos de uma categoria, abra **Categorias** na faixa e toque no
+   lápis dela. Troque o nome e a cor e salve.
+2. Aplique (ou feche no "X"): os cards daquela categoria mostram o nome e a
+   cor novos.
+3. Tente renomear para o nome de outra categoria: aparece o aviso, e nada
+   muda.
+4. Feche e reabra o app: a edição continua lá.
+5. Abra "Nova categoria" no Galaxy Tab A e no RedMagic: as 30 cores ficam
+   numa grade compacta, sem esticar o diálogo.
+6. No tema escuro, confira se Vinho e Grafite continuam visíveis na badge.

@@ -367,7 +367,8 @@ void main() {
   });
 
   test('a paleta tem cores diferentes e nomes únicos', () {
-    expect(categoryPalette.map((c) => c.value).toSet(), hasLength(12));
-    expect(categoryPalette.map((c) => c.name).toSet(), hasLength(12));
+    // Etapa 6D: 30 cores (eram 12).
+    expect(categoryPalette.map((c) => c.value).toSet(), hasLength(30));
+    expect(categoryPalette.map((c) => c.name).toSet(), hasLength(30));
   });
 }

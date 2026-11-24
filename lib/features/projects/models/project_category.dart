@@ -84,13 +84,21 @@ class CategoryColor {
   final int value;
 }
 
-/// Paleta fixa e pequena.
+/// Paleta fixa de 30 cores (Etapa 6D; eram 12 na Etapa 5A).
 ///
 /// Por que não um seletor de cor livre (roda de cores)? Ele é pesado, difícil
-/// de usar com o dedo e gera cores parecidas demais entre si. 12 cores bem
-/// diferentes bastam para distinguir categorias de relance, e todas têm bom
-/// contraste com texto claro e escuro.
+/// de usar com o dedo e gera cores parecidas demais entre si. Uma paleta fixa
+/// garante, por teste (`test/projects/category_palette_test.dart`), que:
+/// - nenhuma cor some no fundo CLARO nem no ESCURO (tons médios: nada perto
+///   do branco nem do preto);
+/// - não há duas cores quase iguais (distância mínima entre elas).
+///
+/// As 12 primeiras são as da Etapa 5A, na MESMA ordem e com o mesmo valor:
+/// categorias já criadas não mudam de cor, e o formulário continua sugerindo
+/// primeiro as cores mais "clássicas". As 18 novas vêm depois, agrupadas por
+/// família de cor.
 const List<CategoryColor> categoryPalette = [
+  // ---- Etapa 5A (não mudar a ordem nem os valores) -----------------------
   CategoryColor('Vermelho', 0xFFE53935),
   CategoryColor('Rosa', 0xFFD81B60),
   CategoryColor('Roxo', 0xFF8E24AA),
@@ -103,6 +111,29 @@ const List<CategoryColor> categoryPalette = [
   CategoryColor('Âmbar', 0xFFFFB300),
   CategoryColor('Laranja', 0xFFF4511E),
   CategoryColor('Marrom', 0xFF6D4C41),
+  // ---- Etapa 6D: vermelhos, rosas e laranjas ------------------------------
+  CategoryColor('Vinho', 0xFF880E4F),
+  CategoryColor('Rosa-claro', 0xFFF06292),
+  CategoryColor('Salmão', 0xFFFF7F50),
+  CategoryColor('Pêssego', 0xFFFFAB91),
+  CategoryColor('Terracota', 0xFFBF360C),
+  // ---- roxos --------------------------------------------------------------
+  CategoryColor('Magenta', 0xFFD500F9),
+  CategoryColor('Lavanda', 0xFF9575CD),
+  CategoryColor('Violeta', 0xFF5E35B1),
+  // ---- azuis --------------------------------------------------------------
+  CategoryColor('Azul-cobalto', 0xFF3D5AFE),
+  CategoryColor('Azul-céu', 0xFF4FC3F7),
+  CategoryColor('Azul-aço', 0xFF546E7A),
+  // ---- verdes -------------------------------------------------------------
+  CategoryColor('Menta', 0xFF4DB6AC),
+  CategoryColor('Verde-escuro', 0xFF1B5E20),
+  CategoryColor('Verde-maçã', 0xFF7CB342),
+  CategoryColor('Oliva', 0xFF827717),
+  // ---- amarelos e neutros -------------------------------------------------
+  CategoryColor('Dourado', 0xFFC79100),
+  CategoryColor('Areia', 0xFFA1887F),
+  CategoryColor('Grafite', 0xFF37474F),
 ];
 
 /// Por que um nome de categoria foi recusado.
@@ -117,28 +148,44 @@ enum CategoryNameError {
   final String message;
 }
 
-/// Valida o nome de uma categoria nova. Devolve `null` se estiver tudo certo.
+/// Valida o nome de uma categoria. Devolve `null` se estiver tudo certo.
 ///
 /// Duplicados são comparados SEM maiúsculas e SEM acentos (a mesma regra da
 /// busca): "Animais" e "animais " seriam a mesma etiqueta para o usuário e
 /// só confundiriam na hora de escolher.
 ///
+/// [exceptId] (Etapa 6D): ao EDITAR, a própria categoria não conta como
+/// duplicada. Assim dá para salvar só a cor nova, ou corrigir "animais" para
+/// "Animais".
+///
 /// Usada pelo formulário (para mostrar o erro na hora) e pelo repositório
 /// (que não confia só na UI).
 CategoryNameError? validateCategoryName(
   String name,
-  Iterable<ProjectCategory> existing,
-) {
+  Iterable<ProjectCategory> existing, {
+  String? exceptId,
+}) {
   final trimmed = name.trim();
   if (trimmed.isEmpty) return CategoryNameError.empty;
   if (trimmed.length > ProjectCategory.maxNameLength) {
     return CategoryNameError.tooLong;
   }
   final key = normalizeForSearch(trimmed);
-  if (existing.any((c) => normalizeForSearch(c.name) == key)) {
+  if (existing.any(
+    (c) => c.id != exceptId && normalizeForSearch(c.name) == key,
+  )) {
     return CategoryNameError.duplicate;
   }
   return null;
+}
+
+/// A categoria pedida não existe mais (ex.: foi removida em outra tela).
+class CategoryNotFoundException implements Exception {
+  const CategoryNotFoundException(this.categoryId);
+  final String categoryId;
+
+  @override
+  String toString() => 'CategoryNotFoundException($categoryId)';
 }
 
 /// O nome não passou em [validateCategoryName].

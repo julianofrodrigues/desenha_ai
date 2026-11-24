@@ -7,6 +7,7 @@ import 'package:desenha_ai/features/projects/screens/categories_screen.dart';
 import 'package:desenha_ai/features/projects/screens/category_filter_screen.dart';
 import 'package:desenha_ai/features/projects/widgets/category_badge.dart';
 import 'package:desenha_ai/features/projects/widgets/category_filter_bar.dart';
+import 'package:desenha_ai/features/projects/widgets/project_history_list.dart';
 import 'package:desenha_ai/features/projects/widgets/project_history_tile.dart';
 import 'package:desenha_ai/features/projects/widgets/project_search_field.dart';
 import 'package:desenha_ai/features/theme/app_theme.dart';
@@ -79,8 +80,11 @@ void main() {
         expect(button, findsOneWidget);
         final rect = tester.getRect(button);
         final screen = tester.getSize(find.byType(Scaffold).first);
-        expect(rect.top, lessThan(24));
-        expect(screen.width - rect.right, lessThan(24));
+        // Etapa 6C: 20 dp mais baixo (8 → 28) e maior (56 dp). Nos testes a
+        // SafeArea não tem recuo, então o topo é exatamente 28.
+        expect(rect.top, closeTo(28, 0.5));
+        expect(screen.width - rect.right, closeTo(8, 0.5));
+        expect(rect.size, const Size(56, 56));
 
         // Fica dentro de uma SafeArea (longe de entalhes e da barra de
         // status).
@@ -272,6 +276,104 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
       // Tema escuro → ícones claros.
       expect(style().statusBarIconBrightness, Brightness.light);
+    });
+  });
+
+  group('Etapa 6C: ajustes finos', () {
+    testWidgets('título da listagem desceu 30 dp (topo em 42 dp)',
+        (tester) async {
+      await _pumpHome(tester, withProjects: true);
+      expect(ProjectHistoryList.titleTopInset, 42);
+      expect(tester.getRect(find.byType(DesenhaAiLogo)).top, closeTo(42, 0.5));
+    });
+
+    testWidgets('botão de sol/lua maior: área de 56 dp e ícone de 30 dp',
+        (tester) async {
+      await _pumpHome(tester);
+      expect(tester.getSize(find.byType(ThemeToggleButton)), const Size(56, 56));
+      final icon = tester.widget<IconButton>(
+        find.descendant(
+          of: find.byType(ThemeToggleButton),
+          matching: find.byType(IconButton),
+        ),
+      );
+      expect(icon.iconSize, 30);
+      expect(tester.getSize(find.byIcon(Icons.light_mode)), const Size(30, 30));
+    });
+
+    testWidgets('a SafeArea do aparelho é respeitada (barra de status)',
+        (tester) async {
+      // Simula 24 dp de barra de status: o botão desce junto.
+      tester.view.padding = const FakeViewPadding(top: 24);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await _pumpHome(tester);
+
+      expect(
+        tester.getRect(find.byType(ThemeToggleButton)).top,
+        closeTo(24 + 28, 0.5),
+      );
+    });
+
+    testWidgets(
+        'tela inicial: descer/aumentar o botão NÃO mexe no layout central',
+        (tester) async {
+      await _pumpHome(tester);
+      final screen = tester.getSize(find.byType(Scaffold).first);
+
+      // O botão está numa camada própria (Positioned), fora do conteúdo.
+      expect(
+        find.descendant(
+          of: find.byType(HomeWelcomeView),
+          matching: find.byType(ThemeToggleButton),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.ancestor(
+          of: find.byType(ThemeToggleButton),
+          matching: find.byWidgetPredicate(
+            (w) => w is Positioned && w.top == 0 && w.right == 0,
+          ),
+        ),
+        findsOneWidget,
+      );
+
+      // A tela inicial ocupa a área inteira e o bloco central continua
+      // centralizado nas duas direções.
+      expect(tester.getRect(find.byType(HomeWelcomeView)),
+          Offset.zero & screen);
+      final logo = tester.getRect(find.byType(DesenhaAiLogo));
+      final buttons = tester.getRect(find.byKey(HomeWelcomeView.pickButtonKey))
+          .expandToInclude(
+              tester.getRect(find.byKey(HomeWelcomeView.categoriesButtonKey)));
+      final block = logo.expandToInclude(buttons);
+      expect(block.center.dx, closeTo(screen.width / 2, 1));
+      expect(block.center.dy, closeTo(screen.height / 2, 1));
+
+      // Os dois botões continuam lado a lado e com o mesmo tamanho.
+      final a = tester.getRect(find.byKey(HomeWelcomeView.pickButtonKey));
+      final b =
+          tester.getRect(find.byKey(HomeWelcomeView.categoriesButtonKey));
+      expect(a.center.dy, closeTo(b.center.dy, 1));
+      expect(a.size, b.size);
+
+      // E o botão de sol/lua não fica por cima de nada do bloco central.
+      final toggle = tester.getRect(find.byType(ThemeToggleButton));
+      expect(toggle.overlaps(block), isFalse);
+    });
+
+    testWidgets('celular em pé (360 dp): título e botão não se encostam',
+        (tester) async {
+      tester.view.physicalSize = const Size(360, 740);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await _pumpHome(tester, withProjects: true);
+
+      final logo = tester.getRect(find.byType(DesenhaAiLogo));
+      final toggle = tester.getRect(find.byType(ThemeToggleButton));
+      expect(logo.overlaps(toggle), isFalse);
+      expect(tester.takeException(), isNull);
     });
   });
 

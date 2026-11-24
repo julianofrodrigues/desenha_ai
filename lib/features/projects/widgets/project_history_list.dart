@@ -40,6 +40,17 @@ class ProjectHistoryList extends StatelessWidget {
   /// Abre o seletor de categorias (pesquisar, criar, remover, marcar).
   final VoidCallback onOpenCategoryPicker;
 
+  /// Espaço acima do título (marca "Desenha A.I").
+  ///
+  /// Etapa 6C: era 12 dp; desceu 30 dp (→ 42) para o título não ficar
+  /// colado no topo da tela.
+  static const double titleTopInset = 12 + 30;
+
+  /// Margem lateral do título. Etapa 6C: era 56 dp; virou 72 dp porque o
+  /// botão de sol/lua ficou maior e mais baixo. Num celular de 360 dp, com
+  /// 56 dp, a marca encostaria no botão.
+  static const double titleSideInset = 72;
+
   final List<DrawingProject> projects;
   final ProjectRepository repository;
   final TextEditingController searchController;
@@ -71,10 +82,14 @@ class ProjectHistoryList extends StatelessWidget {
           slivers: [
             // Fase 6 (Etapa 6B): a marca "Desenha A.I" centralizada no topo.
             // Fica NA LISTA (e rola com ela) em vez de fixa no meio da tela:
-            // fixa, ficaria por cima dos cards. A margem de 56 dp nas
-            // laterais deixa livre o canto do botão de sol/lua.
+            // fixa, ficaria por cima dos cards.
             const SliverPadding(
-              padding: EdgeInsets.fromLTRB(56, 12, 56, 4),
+              padding: EdgeInsets.fromLTRB(
+                titleSideInset,
+                titleTopInset,
+                titleSideInset,
+                4,
+              ),
               sliver: SliverToBoxAdapter(
                 child: Center(child: DesenhaAiLogo(height: 44)),
               ),

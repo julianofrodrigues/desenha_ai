@@ -9,6 +9,7 @@ A Fase 6 é o **redesign visual**, em etapas:
 - **Etapa 6A** (seções 1 a 5): tema claro/escuro e botão de sol/lua.
 - **Etapa 6B** (seção 6): Home sem header, botão de sol/lua flutuando no
   canto, botões lado a lado sem imagem e a marca "Desenha A.I" desenhada.
+- **Etapa 6C** (seção 7): ajustes finos de espaçamento e tamanho.
 
 A **Etapa 6A** cobre:
 
@@ -401,3 +402,98 @@ novo ou diretamente.
 4. Alterne o tema: a marca muda de cor, e os ícones do relógio/bateria
    continuam visíveis.
 5. Role a lista no Galaxy Tab A: a marca sobe junto, sem engasgar.
+
+---
+
+## 7. Etapa 6C: ajustes finos de espaçamento e tamanho
+
+| Ajuste | Antes (6B) | Agora (6C) | Onde |
+| --- | --- | --- | --- |
+| Título da listagem (marca "Desenha A.I") | 12 dp do topo | **42 dp** (+30) | `ProjectHistoryList.titleTopInset` |
+| Margem lateral do título | 56 dp | **72 dp** | `ProjectHistoryList.titleSideInset` |
+| Botão de sol/lua: área de toque | 48 dp (padrão do `IconButton`) | **56 dp** | `ThemeToggleButton.size` |
+| Botão de sol/lua: ícone | 24 dp | **30 dp** | `ThemeToggleButton.iconSize` |
+| Botão de sol/lua: distância do topo | 8 dp | **28 dp** (+20) | `HomePage.themeButtonInsets` |
+| Botão de sol/lua: distância da direita | 8 dp | 8 dp | (igual) |
+
+Todas as medidas são **constantes com nome**, e não números soltos no
+layout: dá para ajustar de novo mudando um lugar só, e os testes conferem os
+mesmos valores.
+
+> **Título:** desde a Etapa 6B, o "título" da tela de listagem é a marca
+> "Desenha A.I" no topo da lista. É ela que desceu 30 dp.
+
+### 7.1 Por que a margem lateral do título aumentou
+
+Com o botão de sol/lua maior (56 dp) e mais baixo (topo em 28 dp), ele fica
+na mesma altura da marca. Num celular em pé (360 dp), a margem de 56 dp
+deixava a marca encostar no botão. Com 72 dp sobra espaço (há um teste com
+360 dp).
+
+### 7.2 O botão desce sem mexer no layout da tela inicial
+
+A regra crítica era: descer o botão **não pode empurrar nem desalinhar**
+nada da tela inicial. Por isso ele mudou de `Align` para `Positioned`:
+
+```dart
+// home_page.dart
+Stack(children: [
+  SafeArea(child: AnimatedSwitcher(child: content)),  // layout central
+  Positioned(                                         // camada do botão
+    top: 0,
+    right: 0,
+    child: SafeArea(
+      left: false,
+      bottom: false,
+      child: Padding(
+        padding: HomePage.themeButtonInsets,          // top: 28, right: 8
+        child: ThemeToggleButton(...),
+      ),
+    ),
+  ),
+])
+```
+
+- O `Positioned` ocupa **só o canto**. O `Align` anterior ocupava a tela
+  inteira (mesmo sem desenhar nada) e ficava na frente de todo o conteúdo.
+- O botão está numa **camada separada** do `Stack`: o tamanho e a posição
+  dele não entram no cálculo do layout do conteúdo. O bloco central (marca,
+  textos e os dois botões) continua centralizado nas duas direções, como
+  antes.
+- A `SafeArea` continua valendo: num aparelho com barra de status de 24 dp,
+  o botão fica em 24 + 28 dp (há um teste para isso).
+- "Todas as telas onde ele aparece": o botão existe só na Home, em todos os
+  estados dela (sem imagem, carregando, erro e listagem). Como fica numa
+  camada única, fora do `AnimatedSwitcher`, o ajuste vale para todos.
+
+### 7.3 Por que 56 dp
+
+48 dp é o mínimo recomendado pelo Material para alvos de toque. 56 dp dá
+folga para o polegar no RedMagic e para acertar sem olhar com o Galaxy Tab A
+apoiado na mesa. O sol e a lua cresceram junto (30 dp) para continuar
+proporcionais à área de toque. A animação não mudou: as transições na pintura
+continuam sem `build` a cada quadro.
+
+### 7.4 Testes
+
+Em `test/theme/home_layout_test.dart`:
+
+| Teste | O que confere |
+| --- | --- |
+| título da listagem | topo da marca em 42 dp |
+| botão maior | área de 56 × 56 dp, ícone de 30 dp |
+| `SafeArea` | com 24 dp de barra de status, o botão fica em 52 dp |
+| tela inicial intacta | o botão está num `Positioned(top: 0, right: 0)` fora da tela inicial; a tela inicial ocupa a área inteira; o bloco central fica centralizado nas duas direções; botões lado a lado e iguais; o botão não fica por cima do bloco central |
+| 360 dp | título e botão não se encostam, sem overflow |
+
+O teste de posição da 6B foi atualizado: topo exatamente em 28 dp, a 8 dp da
+direita, com 56 × 56 dp.
+
+### 7.5 Como testar no aparelho
+
+1. Com desenhos: a marca fica mais afastada do topo, sem encostar no botão.
+2. O sol/lua está maior e um pouco mais baixo, nos dois estados da Home.
+3. Sem desenhos: a marca, os textos e os dois botões continuam exatamente no
+   centro da tela.
+4. No RedMagic, o botão não fica sob a câmera frontal nem sob a barra de
+   status.

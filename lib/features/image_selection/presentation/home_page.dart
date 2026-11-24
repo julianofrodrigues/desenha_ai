@@ -79,6 +79,11 @@ class HomePage extends StatefulWidget {
   /// Alternância claro/escuro do botão de sol/lua (Fase 6).
   final ThemeController themeController;
 
+  /// Distância do botão de sol/lua até o canto (dentro da `SafeArea`).
+  ///
+  /// Etapa 6C: desceu 20 dp (topo de 8 → 28 dp).
+  static const themeButtonInsets = EdgeInsets.only(top: 8 + 20, right: 8);
+
   final LocalImageSource imageSource;
 
   /// Histórico de projetos salvos no aparelho.
@@ -444,11 +449,20 @@ class _HomePageState extends State<HomePage> {
             // cima do conteúdo, igual em todos os estados (boas-vindas,
             // carregando, erro e listagem). Fica FORA do `AnimatedSwitcher`
             // para não piscar quando a Home troca de estado.
-            SafeArea(
-              child: Align(
-                alignment: Alignment.topRight,
+            //
+            // Etapa 6C: `Positioned` (ocupa SÓ o canto, e não a tela toda
+            // como o `Align` anterior). O botão não participa do layout do
+            // conteúdo: descer ou aumentar o botão NUNCA empurra a marca nem
+            // os botões centrais da tela inicial.
+            Positioned(
+              top: 0,
+              right: 0,
+              child: SafeArea(
+                // Só os lados que importam para um canto superior direito.
+                left: false,
+                bottom: false,
                 child: Padding(
-                  padding: const EdgeInsets.all(8),
+                  padding: HomePage.themeButtonInsets,
                   child: ThemeToggleButton(controller: widget.themeController),
                 ),
               ),

@@ -77,6 +77,22 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     if (mounted) setState(() => _busy = false);
   }
 
+  /// Editar nome e cor (Etapa 6D). O fluxo é o mesmo do seletor da faixa
+  /// (`editCategory`).
+  Future<void> _edit(ProjectCategory category) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    final message = await editCategory(
+      context,
+      category: category,
+      all: _categories ?? const [],
+      categories: widget.categoryRepository,
+    );
+    if (message != null) _showMessage(message);
+    await _load(); // a lista mostra o nome e a cor novos na hora
+    if (mounted) setState(() => _busy = false);
+  }
+
   /// Remove a categoria e limpa o vínculo dos projetos (a ordem e o porquê
   /// estão em `removeCategoryAndUnlink`).
   Future<void> _delete(ProjectCategory category) async {
@@ -148,10 +164,25 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        trailing: IconButton(
-                          tooltip: 'Remover categoria',
-                          onPressed: _busy ? null : () => _delete(category),
-                          icon: const Icon(Icons.delete_outline),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Etapa 6D: editar fica à ESQUERDA do remover,
+                            // como nos cards dos desenhos (Fase 4): a ação
+                            // reversível vem antes da destrutiva.
+                            IconButton(
+                              tooltip: 'Editar categoria',
+                              onPressed:
+                                  _busy ? null : () => _edit(category),
+                              icon: const Icon(Icons.edit_outlined),
+                            ),
+                            IconButton(
+                              tooltip: 'Remover categoria',
+                              onPressed:
+                                  _busy ? null : () => _delete(category),
+                              icon: const Icon(Icons.delete_outline),
+                            ),
+                          ],
                         ),
                       ),
                     );

@@ -295,6 +295,27 @@ Detalhes: `docs/07-fase6-tema-e-layout.md`.
   nem imagem): no centro da tela inicial e no topo da listagem.
 - Ícones da barra de status ajustados ao tema (antes era papel da AppBar).
 
+### Etapa 6C · Ajustes finos de espaçamento e tamanho 🚧 (aguardando testes no aparelho)
+
+- Título da listagem (marca) **30 dp mais baixo** (topo em 42 dp) e com
+  margem lateral maior (72 dp).
+- Botão de sol/lua **maior** (56 dp de área de toque, ícone de 30 dp) e
+  **20 dp mais baixo** (topo em 28 dp).
+- O botão virou um `Positioned` no canto: descer ou aumentar o botão não
+  mexe no layout central da tela inicial.
+
+### Etapa 6D · Editar categorias e paleta de 30 cores 🚧 (aguardando testes no aparelho)
+
+Detalhes: `docs/06-fase5-categorias-e-filtros.md`, seção 10.
+
+- **Lápis "Editar categoria"** à esquerda da lixeira, na tela "Categorias" e
+  no seletor da faixa: muda o nome (sem vazio nem duplicado de outra
+  categoria) e a cor, gravando em `categories.json`.
+- Os cards vinculados mostram o nome e a cor novos sem regravar nenhum
+  desenho, porque eles guardam só o id da categoria.
+- **Paleta de 30 cores** (as 12 originais preservadas + 18 novas), com
+  contraste e distinção garantidos por teste, em grade compacta.
+
 ### Próximas etapas
 
 A definir nos próximos pedidos.
