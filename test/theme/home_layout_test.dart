@@ -80,11 +80,11 @@ void main() {
         expect(button, findsOneWidget);
         final rect = tester.getRect(button);
         final screen = tester.getSize(find.byType(Scaffold).first);
-        // Etapa 6C: 20 dp mais baixo (8 → 28) e maior (56 dp). Nos testes a
+        // Etapa 6C: 20 dp mais baixo (8 → 28) e maior (Etapa 6E: 64 dp). Nos testes a
         // SafeArea não tem recuo, então o topo é exatamente 28.
         expect(rect.top, closeTo(28, 0.5));
         expect(screen.width - rect.right, closeTo(8, 0.5));
-        expect(rect.size, const Size(56, 56));
+        expect(rect.size, const Size(64, 64));
 
         // Fica dentro de uma SafeArea (longe de entalhes e da barra de
         // status).
@@ -280,25 +280,34 @@ void main() {
   });
 
   group('Etapa 6C: ajustes finos', () {
-    testWidgets('título da listagem desceu 30 dp (topo em 42 dp)',
+    testWidgets('Etapa 6F: a marca fica 30 dp abaixo do botão de sol/lua',
         (tester) async {
       await _pumpHome(tester, withProjects: true);
-      expect(ProjectHistoryList.titleTopInset, 42);
-      expect(tester.getRect(find.byType(DesenhaAiLogo)).top, closeTo(42, 0.5));
+      // 28 (topo do botão) + 64 (altura) + 30 = 122.
+      expect(ProjectHistoryList.titleTopInset, 122);
+      final toggle = tester.getRect(find.byType(ThemeToggleButton));
+      final logo = tester.getRect(find.byType(DesenhaAiLogo));
+      expect(logo.top - toggle.bottom, closeTo(30, 0.5));
+      // Tudo abaixo da marca desceu junto: "Novo desenho" vem depois dela.
+      expect(
+        tester.getRect(find.text('Novo desenho')).top,
+        greaterThan(logo.bottom),
+      );
+      expect(tester.takeException(), isNull);
     });
 
-    testWidgets('botão de sol/lua maior: área de 56 dp e ícone de 30 dp',
+    testWidgets('botão de sol/lua maior: área de 64 dp e ícone de 36 dp',
         (tester) async {
       await _pumpHome(tester);
-      expect(tester.getSize(find.byType(ThemeToggleButton)), const Size(56, 56));
+      expect(tester.getSize(find.byType(ThemeToggleButton)), const Size(64, 64));
       final icon = tester.widget<IconButton>(
         find.descendant(
           of: find.byType(ThemeToggleButton),
           matching: find.byType(IconButton),
         ),
       );
-      expect(icon.iconSize, 30);
-      expect(tester.getSize(find.byIcon(Icons.light_mode)), const Size(30, 30));
+      expect(icon.iconSize, 36);
+      expect(tester.getSize(find.byIcon(Icons.light_mode)), const Size(36, 36));
     });
 
     testWidgets('a SafeArea do aparelho é respeitada (barra de status)',

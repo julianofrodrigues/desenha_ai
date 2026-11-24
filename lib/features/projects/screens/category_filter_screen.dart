@@ -1,5 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/widgets/large_button_style.dart';
+import '../../../core/widgets/page_header.dart';
+import '../../theme/services/theme_controller.dart';
 import '../models/category_filter.dart';
 import '../models/project_category.dart';
 import '../models/project_search.dart';
@@ -20,17 +23,18 @@ Future<CategoryFilter?> showCategoryFilterScreen(
   required CategoryFilter initial,
   required CategoryRepository categoryRepository,
   required ProjectRepository projectRepository,
+  required ThemeController themeController,
 }) {
   return Navigator.of(context).push<CategoryFilter>(
     MaterialPageRoute(
-      // `fullscreenDialog`: animação de baixo para cima e botão "X" no
-      // lugar da seta, deixando claro que é uma escolha que se aplica ou
-      // descarta, e não uma tela de navegação.
-      fullscreenDialog: true,
+      // Etapa 6F: rota comum (sem `fullscreenDialog`). O "X" virou a seta
+      // de voltar, então a animação lateral de navegação combina melhor do
+      // que a de baixo para cima. Voltar continua descartando o rascunho.
       builder: (_) => CategoryFilterScreen(
         initial: initial,
         categoryRepository: categoryRepository,
         projectRepository: projectRepository,
+        themeController: themeController,
       ),
     ),
   );
@@ -44,7 +48,7 @@ Future<CategoryFilter?> showCategoryFilterScreen(
 /// própria tem o seu `Scaffold` e resolve as duas coisas.
 ///
 /// As marcações são um RASCUNHO: só valem para o histórico ao tocar em
-/// "Aplicar". Fechar no "X" descarta as marcações (mas não desfaz
+/// "Aplicar". Voltar pela seta descarta as marcações (mas não desfaz
 /// categorias criadas ou removidas, que já foram gravadas).
 class CategoryFilterScreen extends StatefulWidget {
   const CategoryFilterScreen({
@@ -52,13 +56,19 @@ class CategoryFilterScreen extends StatefulWidget {
     required this.initial,
     required this.categoryRepository,
     required this.projectRepository,
+    required this.themeController,
   });
 
   final CategoryFilter initial;
   final CategoryRepository categoryRepository;
   final ProjectRepository projectRepository;
 
+  /// Botão de sol/lua no topo (Etapa 6F: presente em todas as telas).
+  final ThemeController themeController;
+
   static const applyButtonKey = ValueKey('category-filter-apply');
+  static const clearButtonKey = ValueKey('category-filter-clear');
+  static const addButtonKey = ValueKey('category-filter-add');
 
   @override
   State<CategoryFilterScreen> createState() => _CategoryFilterScreenState();
@@ -183,61 +193,63 @@ class _CategoryFilterScreenState extends State<CategoryFilterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Filtrar por categoria'),
-        actions: [
-          TextButton(
-            // Desmarca tudo no rascunho (ainda precisa de "Aplicar").
-            onPressed: _draft.isActive
-                ? () => setState(() => _draft = CategoryFilter.none)
-                : null,
-            child: const Text('Limpar'),
-          ),
-          IconButton(
-            tooltip: 'Nova categoria',
-            onPressed: _busy ? null : _create,
-            icon: const Icon(Icons.add),
-          ),
-        ],
-      ),
       body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: TextField(
-                controller: _searchController,
-                focusNode: _searchFocusNode,
-                textInputAction: TextInputAction.search,
-                onTapOutside: (_) => _searchFocusNode.unfocus(),
-                decoration: const InputDecoration(
-                  hintText: 'Pesquisar categorias',
-                  prefixIcon: Icon(Icons.search),
-                  border: OutlineInputBorder(),
-                  isDense: true,
+        // Etapa 6F: tudo numa rolagem só (slivers). Com o título mais baixo,
+        // um celular deitado com o teclado aberto não teria altura para
+        // cabeçalho + pesquisa + botões + lista fixos; rolando juntos, nunca
+        // há overflow.
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: PageHeader(
+                title: 'Filtrar por categoria',
+                themeController: widget.themeController,
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                child: TextField(
+                  controller: _searchController,
+                  focusNode: _searchFocusNode,
+                  textInputAction: TextInputAction.search,
+                  onTapOutside: (_) => _searchFocusNode.unfocus(),
+                  decoration: const InputDecoration(
+                    hintText: 'Pesquisar categorias',
+                    prefixIcon: Icon(Icons.search),
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
                 ),
               ),
             ),
-            Expanded(
-              // Só a lista escuta o texto da pesquisa: digitar não
-              // reconstrói a barra do topo nem o botão "Aplicar".
-              child: ValueListenableBuilder<TextEditingValue>(
-                valueListenable: _searchController,
-                builder: (context, value, _) => _CategoryOptions(
-                  categories: _categories,
-                  query: value.text,
-                  draft: _draft,
-                  busy: _busy,
-                  onToggleUncategorized: () => setState(
-                    () => _draft = _draft.toggleUncategorized(),
-                  ),
-                  onToggle: (c) => setState(
-                    () => _draft = _draft.toggleCategory(c.id),
-                  ),
-                  onEdit: _edit,
-                  onRemove: _remove,
-                  onCreate: _create,
+            SliverToBoxAdapter(
+              child: _FilterActions(
+                canClear: _draft.isActive,
+                busy: _busy,
+                // Desmarca tudo no rascunho (ainda precisa de "Aplicar").
+                onClear: () => setState(() => _draft = CategoryFilter.none),
+                onAdd: _create,
+              ),
+            ),
+            // Só a lista escuta o texto da pesquisa: digitar não reconstrói
+            // o cabeçalho, os botões nem o "Aplicar".
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _searchController,
+              builder: (context, value, _) => _CategoryOptions(
+                categories: _categories,
+                query: value.text,
+                draft: _draft,
+                busy: _busy,
+                onToggleUncategorized: () => setState(
+                  () => _draft = _draft.toggleUncategorized(),
                 ),
+                onToggle: (c) => setState(
+                  () => _draft = _draft.toggleCategory(c.id),
+                ),
+                onEdit: _edit,
+                onRemove: _remove,
+                onCreate: _create,
               ),
             ),
           ],
@@ -299,7 +311,12 @@ class _CategoryOptions extends StatelessWidget {
   Widget build(BuildContext context) {
     final categories = this.categories;
     if (categories == null) {
-      return const Center(child: CircularProgressIndicator());
+      // Este widget é um SLIVER (fica dentro do `CustomScrollView`), por
+      // isso o carregando vai num `SliverFillRemaining`.
+      return const SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(child: CircularProgressIndicator()),
+      );
     }
 
     final key = normalizeForSearch(query);
@@ -317,8 +334,9 @@ class _CategoryOptions extends StatelessWidget {
         validateCategoryName(query, categories) == null;
 
     final theme = Theme.of(context);
-    return ListView(
-      padding: const EdgeInsets.only(bottom: 24),
+    // `SliverList.list`: os itens só são construídos quando entram na tela,
+    // como no `ListView` de antes.
+    return SliverList.list(
       children: [
         if (showUncategorized)
           CheckboxListTile(
@@ -355,8 +373,8 @@ class _CategoryOptions extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              'Você ainda não criou categorias. Toque em + para criar a '
-              'primeira.',
+              'Você ainda não criou categorias. Toque em "Adicionar '
+              'categoria" para criar a primeira.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium,
             ),
@@ -369,7 +387,62 @@ class _CategoryOptions extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ),
+        // Espaço no fim, para o último item não encostar no "Aplicar".
+        const SizedBox(height: 24),
       ],
+    );
+  }
+}
+
+/// Linha logo abaixo da pesquisa (Etapa 6F): "Limpar" e "Adicionar
+/// categoria", os dois à DIREITA.
+///
+/// "Adicionar categoria" usa o mesmo molde dos botões da tela sem imagem
+/// ([largeButtonStyle]); "Limpar" tem a mesma altura, mas é só texto, porque
+/// é uma ação secundária. `Wrap` (e não `Row`): num celular estreito, se os
+/// dois não couberem lado a lado, o segundo desce em vez de dar overflow.
+class _FilterActions extends StatelessWidget {
+  const _FilterActions({
+    required this.canClear,
+    required this.busy,
+    required this.onClear,
+    required this.onAdd,
+  });
+
+  final bool canClear;
+  final bool busy;
+  final VoidCallback onClear;
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Wrap(
+        alignment: WrapAlignment.end,
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          TextButton.icon(
+            key: CategoryFilterScreen.clearButtonKey,
+            onPressed: canClear ? onClear : null,
+            icon: const Icon(Icons.clear_all),
+            label: const Text('Limpar'),
+            style: TextButton.styleFrom(
+              minimumSize: const Size(0, 56),
+              textStyle: theme.textTheme.titleMedium,
+            ),
+          ),
+          FilledButton.icon(
+            key: CategoryFilterScreen.addButtonKey,
+            onPressed: busy ? null : onAdd,
+            icon: const Icon(Icons.add),
+            label: const Text('Adicionar categoria'),
+            style: largeButtonStyle(theme),
+          ),
+        ],
+      ),
     );
   }
 }

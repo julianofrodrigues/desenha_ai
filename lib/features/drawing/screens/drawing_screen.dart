@@ -3,6 +3,8 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../projects/models/drawing_project.dart';
 import '../../projects/services/project_repository.dart';
+import '../../theme/services/theme_controller.dart';
+import '../../theme/widgets/theme_toggle_button.dart';
 import '../models/drawing_mode.dart';
 import '../models/drawing_settings.dart';
 import '../models/overlay_transform.dart';
@@ -25,7 +27,8 @@ typedef CameraServiceFactory = CameraService Function();
 /// 1. Fundo: câmera ao vivo ou cor sólida.
 /// 2. Imagem de referência com gestos (tela inteira).
 /// 3. Painel de status da câmera (abrindo / sem permissão).
-/// 4. Controles (voltar, barra inferior). Somem quando a tela está travada.
+/// 4. Controles (voltar, sol/lua, barra inferior). Somem quando a tela está
+///    travada.
 /// 5. Botão de trava (sempre visível).
 class DrawingScreen extends StatefulWidget {
   const DrawingScreen({
@@ -35,7 +38,11 @@ class DrawingScreen extends StatefulWidget {
     required this.projectRepository,
     required this.cameraServiceFactory,
     required this.screenWakeLock,
+    required this.themeController,
   });
+
+  /// Botão de sol/lua (Etapa 6F: presente em todas as telas).
+  final ThemeController themeController;
 
   /// Projeto do histórico. Os ajustes dele são o estado INICIAL da tela.
   final DrawingProject project;
@@ -290,6 +297,32 @@ class _DrawingScreenState extends State<DrawingScreen>
                             camera: _camera,
                             onResetPosition: _resetPosition,
                             onToggleFlip: _toggleFlip,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                // Etapa 6F: sol/lua também aqui, no canto superior direito,
+                // à ESQUERDA do cadeado (que continua no canto). Some quando
+                // a tela trava, como os outros controles. É uma camada
+                // separada, e não uma `Row` com o cadeado, para não mexer na
+                // árvore (nem no estado) do `LockButton`.
+                if (!locked)
+                  SafeArea(
+                    child: Align(
+                      alignment: Alignment.topRight,
+                      child: Padding(
+                        // 8 (margem) + 64 (cadeado) + 8 (respiro).
+                        padding: const EdgeInsets.only(top: 8, right: 80),
+                        // Fundo escuro translúcido, como o do cadeado: o
+                        // sol/lua fica legível sobre a câmera ao vivo.
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.black.withValues(alpha: 0.55),
+                          ),
+                          child: ThemeToggleButton(
+                            controller: widget.themeController,
                           ),
                         ),
                       ),

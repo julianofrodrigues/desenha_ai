@@ -63,6 +63,7 @@ void main() {
           home: CategoriesScreen(
             categoryRepository: categories,
             projectRepository: FakeProjectRepository(),
+            themeController: fakeThemeController(),
           ),
         ),
       );
@@ -178,6 +179,7 @@ void main() {
           home: CategoriesScreen(
             categoryRepository: FakeCategoryRepository(initial: [_animais]),
             projectRepository: FakeProjectRepository(),
+            themeController: fakeThemeController(),
           ),
         ),
       );
@@ -216,6 +218,7 @@ void main() {
           home: CategoriesScreen(
             categoryRepository: FakeCategoryRepository(),
             projectRepository: FakeProjectRepository(),
+            themeController: fakeThemeController(),
           ),
         ),
       );
@@ -249,6 +252,7 @@ void main() {
           home: CategoriesScreen(
             categoryRepository: FakeCategoryRepository(),
             projectRepository: FakeProjectRepository(),
+            themeController: fakeThemeController(),
           ),
         ),
       );

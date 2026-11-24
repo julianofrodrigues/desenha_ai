@@ -304,6 +304,20 @@ Detalhes: `docs/07-fase6-tema-e-layout.md`.
 - O botão virou um `Positioned` no canto: descer ou aumentar o botão não
   mexe no layout central da tela inicial.
 
+### Etapa 6F · Seta + título centralizado e sol/lua em todas as telas 🚧 (aguardando testes no aparelho)
+
+Detalhes: `docs/07-fase6-tema-e-layout.md`, seção 9. `PageHeader` sem
+faixa (seta de voltar no lugar do "X", título centralizado bem abaixo do
+topo); sol/lua no canto superior direito de todas as telas, inclusive a de
+desenho; "Limpar" e "Adicionar categoria" à direita, abaixo da pesquisa do
+seletor; na listagem da Home, a marca fica 30 dp abaixo do sol/lua.
+
+### Etapa 6E · Sem `AppBar` em nenhuma tela e sol/lua maior 🚧 (aguardando testes no aparelho)
+
+Detalhes: `docs/07-fase6-tema-e-layout.md`, seção 8. Categorias e Filtrar por
+categoria passam a usar o `PageHeader` (`lib/core/widgets/page_header.dart`)
+no corpo; botão sol/lua em 64 dp (ícone de 36 dp).
+
 ### Etapa 6D · Editar categorias e paleta de 30 cores 🚧 (aguardando testes no aparelho)
 
 Detalhes: `docs/06-fase5-categorias-e-filtros.md`, seção 10.

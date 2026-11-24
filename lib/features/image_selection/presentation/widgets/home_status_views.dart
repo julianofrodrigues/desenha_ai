@@ -6,6 +6,7 @@
 // reconstrói só a parte que mudou.
 import 'package:material_ui/material_ui.dart';
 
+import '../../../../core/widgets/large_button_style.dart';
 import '../../../theme/widgets/desenha_ai_logo.dart';
 
 /// Layout centralizado com largura máxima, reaproveitado pelos estados
@@ -61,11 +62,9 @@ class HomeWelcomeView extends StatelessWidget {
 
     // Mesmo "molde" para os dois botões: mesma altura e mesmo estilo
     // preenchido. Lado a lado, nenhum parece "menos importante" por engano.
-    final buttonStyle = FilledButton.styleFrom(
-      minimumSize: const Size(0, 56),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      textStyle: theme.textTheme.titleMedium,
-    );
+    // Etapa 6F: o molde foi para `core/`, porque o "Adicionar categoria"
+    // também o usa.
+    final buttonStyle = largeButtonStyle(theme);
 
     return _CenteredMessage(
       children: [

@@ -36,6 +36,7 @@ Future<FakeCameraService> _pumpScreen(
         projectRepository: repo,
         cameraServiceFactory: () => camera,
         screenWakeLock: wakeLock ?? FakeScreenWakeLock(),
+        themeController: fakeThemeController(),
       ),
     ),
   );

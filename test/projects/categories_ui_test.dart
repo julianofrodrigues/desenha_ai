@@ -317,6 +317,7 @@ void main() {
           home: CategoriesScreen(
             categoryRepository: categories,
             projectRepository: projects,
+            themeController: fakeThemeController(),
           ),
         ),
       );

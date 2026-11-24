@@ -1,0 +1,30 @@
+﻿app.dart:25: required this.themeController,
+app.dart:45: final ThemeController themeController;
+app.dart:58: themeController: themeController,
+app.dart:62: valueListenable: themeController.mode,
+main.dart:37: final themeController = await ThemeController.load(
+main.dart:67: themeController: themeController,
+drawing_screen.dart:31: const DrawingScreen({
+home_page.dart:76: required this.themeController,
+home_page.dart:80: final ThemeController themeController;
+home_page.dart:85: static const themeButtonInsets = EdgeInsets.only(top: 8 + 20, right: 8);
+home_page.dart:264: builder: (_) => DrawingScreen(
+home_page.dart:333: Future<void> _openCategories() async {
+home_page.dart:337: builder: (_) => CategoriesScreen(
+home_page.dart:347: Future<void> _openCategoryPicker() async {
+home_page.dart:349: final result = await showCategoryFilterScreen(
+home_page.dart:415: onOpenCategories: _openCategories,
+home_page.dart:425: onOpenCategoryPicker: _openCategoryPicker,
+home_page.dart:465: padding: HomePage.themeButtonInsets,
+home_page.dart:466: child: ThemeToggleButton(controller: widget.themeController),
+categories_screen.dart:16: const CategoriesScreen({
+category_filter_screen.dart:19: Future<CategoryFilter?> showCategoryFilterScreen(
+category_filter_screen.dart:27: // `fullscreenDialog`: animação de baixo para cima e botão "X" no
+category_filter_screen.dart:30: fullscreenDialog: true,
+category_filter_screen.dart:31: builder: (_) => CategoryFilterScreen(
+category_filter_screen.dart:51: const CategoryFilterScreen({
+theme_controller.dart:14: class ThemeController {
+theme_controller.dart:15: ThemeController({
+theme_controller.dart:23: static Future<ThemeController> load(ThemePreferenceStore store) async {
+theme_controller.dart:25: return ThemeController(store: store, initialMode: _modeFor(saved));
+theme_toggle_button.dart:22: final ThemeController controller;

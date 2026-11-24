@@ -23,13 +23,13 @@ class ThemeToggleButton extends StatefulWidget {
 
   static const duration = Duration(milliseconds: 350);
 
-  /// Área de toque do botão. Etapa 6C: 56 dp (era 48 dp, o padrão do
+  /// Área de toque do botão. Etapa 6E: 64 dp (6C: 56 dp (era 48 dp, o padrão do
   /// `IconButton`), mais confortável para o polegar no RedMagic e para
   /// acertar sem olhar no Tab A apoiado na mesa.
-  static const double size = 56;
+  static const double size = 64;
 
-  /// Tamanho do sol/da lua. Etapa 6C: 30 dp (era 24 dp).
-  static const double iconSize = 30;
+  /// Tamanho do sol/da lua. Etapa 6E: 36 dp (6C: 30 dp; originalmente 24 dp).
+  static const double iconSize = 36;
 
   @override
   State<ThemeToggleButton> createState() => _ThemeToggleButtonState();

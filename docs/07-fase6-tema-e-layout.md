@@ -497,3 +497,135 @@ direita, com 56 × 56 dp.
    centro da tela.
 4. No RedMagic, o botão não fica sob a câmera frontal nem sob a barra de
    status.
+
+## 8. Etapa 6E: nenhuma tela com `AppBar` e botão sol/lua maior
+
+### 8.1 Headers removidos de todas as páginas
+A Home (6B) e a tela de desenho já não tinham `AppBar`. Restavam duas telas:
+
+| Tela | Antes (na `AppBar`) | Agora (no corpo) |
+| --- | --- | --- |
+| Categorias | título "Categorias" e seta de voltar | `PageHeader` com título e voltar; o botão "Nova categoria" continua flutuante |
+| Filtrar por categoria | título, "Limpar" e "+" (nova categoria) | `PageHeader` com título, "Limpar" e "+" à direita; "X" de fechar |
+
+Nenhuma ação foi removida. O novo widget compartilhado
+`lib/core/widgets/page_header.dart` (usado por duas telas, então vai em
+`core/`) mostra:
+
+- seta de voltar (`BackButton`) se existe tela anterior, ou "X"
+  (`CloseButton`) se a rota é `fullscreenDialog`, como o seletor de
+  categorias. É o mesmo comportamento automático que a `AppBar` tinha;
+- o título em `headlineSmall` negrito, sem faixa de fundo nem sombra, no
+  mesmo estilo da marca da Home;
+- as ações, alinhadas à direita.
+
+O cabeçalho fica dentro da `SafeArea`, então não encosta na barra de status.
+Por não ter `AppBar`, ele não "rola por baixo" nem pinta fundo: é só um
+`Row` leve, sem custo extra de pintura no Galaxy Tab A.
+
+### 8.2 Botão de sol/lua maior
+`ThemeToggleButton`: área de toque de 56 para **64 dp** e sol/lua de 30 para
+**36 dp**. O botão existe numa única camada da Home (todos os estados dela),
+então o novo tamanho vale onde ele aparece. A animação não mudou
+(`Rotation`/`Scale`/`FadeTransition`, 350 ms, sem `build` por quadro).
+
+### 8.3 Testes
+- `test/theme/home_layout_test.dart`: área de 64 x 64 dp, ícone de 36 dp,
+  topo em 28 dp, sem sobreposição com o título, nem em 360 dp de largura.
+- `test/projects/*`: os testes que fecham o seletor pelo "X" e abrem a tela de
+  Categorias continuam passando com o cabeçalho no corpo.
+
+### 8.4 Como testar no aparelho
+1. Abra "Categorias" e o seletor de filtro: sem barra no topo, título grande
+   e seta de voltar (ou "X" no seletor); "Limpar" e "+" funcionam.
+2. O sol/lua está visivelmente maior na Home e continua girando suave.
+
+## 9. Etapa 6F: seta + título centralizado, sol/lua em todas as telas
+
+Corrige o que não ficou bom na 6E: o `PageHeader` da 6E era uma `Row`
+(voltar, título à esquerda, ações) que ainda parecia uma `AppBar`, e o
+seletor de categorias mostrava "X".
+
+### 9.1 Novo `PageHeader` (sem nenhuma faixa)
+`lib/core/widgets/page_header.dart`, usado por **Categorias** e **Filtrar por
+categoria**. Duas linhas, sem fundo, borda ou sombra:
+
+1. Seta de voltar (`Icons.arrow_back`, 56 dp) à esquerda e o botão de sol/lua
+   à direita, a `PageHeader.topInset` (28 dp) do topo da `SafeArea`. É a
+   mesma altura do botão na Home (`HomePage.themeButtonInsets` agora usa
+   essa constante), então o sol/lua não "pula" ao trocar de tela.
+2. O título centralizado, em `headlineMedium` negrito, 20 dp abaixo dessa
+   linha (topo em ~112 dp, fora da faixa de 56 dp de uma `AppBar`).
+
+Como o título tem uma linha só dele, ele nunca colide com a seta nem com o
+sol/lua, nem em 360 dp. A seta usa `maybePop`, que respeita um `PopScope`.
+
+O seletor de categorias deixou de ser `fullscreenDialog`: com a seta no lugar
+do "X", a animação lateral de navegação combina melhor do que a de baixo para
+cima. Voltar pela seta continua descartando as marcações, como o "X" fazia.
+
+### 9.2 Seletor de categorias: botões abaixo da pesquisa
+Logo abaixo da pesquisa, à direita: **Limpar** (texto, ação secundária) e
+**Adicionar categoria** (preenchido). O "+" solto do topo saiu.
+
+- "Adicionar categoria" usa o mesmo molde dos botões da tela sem imagem
+  ("Escolher imagem" e "Categorias"): 56 dp de altura e texto `titleMedium`.
+  O molde foi para `lib/core/widgets/large_button_style.dart`
+  (`largeButtonStyle`), porque agora tem dois usos reais.
+- Os dois ficam num `Wrap` alinhado à direita: num celular estreito, se não
+  couberem lado a lado, o segundo desce em vez de dar overflow.
+- A tela inteira virou um `CustomScrollView` (cabeçalho, pesquisa, botões e a
+  lista como slivers). Com o título mais baixo, um celular deitado com o
+  teclado aberto não teria altura para tudo fixo; rolando juntos, não há
+  overflow. A lista continua preguiçosa (`SliverList.list`) e só ela escuta o
+  texto da pesquisa.
+
+### 9.3 Sol/lua em todas as telas
+| Tela | Onde fica |
+| --- | --- |
+| Home (todos os estados) | canto superior direito, camada própria (desde a 6B) |
+| Categorias | canto superior direito, no `PageHeader` |
+| Filtrar por categoria | canto superior direito, no `PageHeader` |
+| Desenho | canto superior direito, à esquerda do cadeado |
+
+Na tela de desenho o cadeado continua no canto (é o controle mais importante
+ali). O sol/lua fica 8 dp à esquerda dele, com o mesmo fundo escuro
+translúcido, para ficar legível sobre a câmera. Ele some quando a tela é
+travada, como os outros controles. É uma camada separada no `Stack` (e não
+uma `Row` com o cadeado) para não mexer no estado do `LockButton`.
+
+As telas recebem o `ThemeController` pelo construtor (`themeController:`),
+como os outros serviços, então os testes usam o `fakeThemeController()`.
+
+### 9.4 Home: marca 30 dp abaixo do sol/lua
+Na listagem, `ProjectHistoryList.titleTopInset` passou de 42 para
+`PageHeader.topInset + ThemeToggleButton.size + 30` = 28 + 64 + 30 =
+**122 dp**. A marca e tudo abaixo dela (Novo desenho, busca, faixa, cards)
+descem juntos, porque estão no mesmo `CustomScrollView`, que rola. Por isso
+não há overflow e nada muda no custo de rolagem. A tela sem imagem continua
+centralizada como antes.
+
+### 9.5 Testes
+- `test/theme/screens_without_header_test.dart` (novo):
+  - Categorias: sem `AppBar` nem "X", com seta; título centralizado com topo
+    abaixo de 100 dp e a seta acima dele; sol/lua 64 x 64 a 28 dp do topo, a
+    8 dp da direita, sem encostar em nada; a seta volta; o sol/lua troca o
+    tema; sem overflow em 740 x 360.
+  - Seletor: seta no lugar do "X", sol/lua presente, título centralizado;
+    "Limpar" e "Adicionar categoria" abaixo da pesquisa, alinhados à
+    direita (Adicionar na margem, Limpar 8 dp à esquerda), com 56 dp; "Adicionar categoria" abre o formulário; sem overflow num
+    celular deitado.
+  - Desenho: sol/lua à esquerda do cadeado, na mesma altura, e some ao
+    travar.
+- `test/theme/home_layout_test.dart`: a marca fica exatamente 30 dp abaixo
+  da base do sol/lua (topo em 122 dp) e "Novo desenho" continua abaixo dela.
+- `test/projects/category_filter_ui_test.dart`: fechar o seletor agora é
+  pela seta (`PageHeader.backButtonKey`).
+
+### 9.6 Como testar no aparelho
+1. Categorias e Filtrar por categoria: sem barra no topo; seta à esquerda e
+   sol/lua à direita na mesma linha; título centralizado bem abaixo.
+2. No seletor: "Limpar" e "Adicionar categoria" à direita, logo abaixo da
+   pesquisa.
+3. Tela de desenho: o sol/lua aparece ao lado do cadeado e some ao travar.
+4. Home com desenhos: a marca fica cerca de 30 dp abaixo do sol/lua.

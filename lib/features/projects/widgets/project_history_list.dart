@@ -1,6 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/widgets/page_header.dart';
 import '../../theme/widgets/desenha_ai_logo.dart';
+import '../../theme/widgets/theme_toggle_button.dart';
 import '../models/category_filter.dart';
 import '../models/drawing_project.dart';
 import '../models/project_category.dart';
@@ -42,9 +44,16 @@ class ProjectHistoryList extends StatelessWidget {
 
   /// Espaço acima do título (marca "Desenha A.I").
   ///
-  /// Etapa 6C: era 12 dp; desceu 30 dp (→ 42) para o título não ficar
-  /// colado no topo da tela.
-  static const double titleTopInset = 12 + 30;
+  /// Etapa 6C: era 12 dp; desceu para 42 dp.
+  /// Etapa 6F: a marca (e tudo abaixo dela) fica [gapBelowThemeButton] abaixo
+  /// da BASE do botão de sol/lua: 28 (topo do botão) + 64 (altura) + 30 =
+  /// 122 dp. Calculado a partir das constantes do botão: se ele mudar de
+  /// tamanho ou de altura, o espaço de 30 dp continua valendo.
+  static const double titleTopInset =
+      PageHeader.topInset + ThemeToggleButton.size + gapBelowThemeButton;
+
+  /// Espaço entre a base do botão de sol/lua e a marca (Etapa 6F).
+  static const double gapBelowThemeButton = 30;
 
   /// Margem lateral do título. Etapa 6C: era 56 dp; virou 72 dp porque o
   /// botão de sol/lua ficou maior e mais baixo. Num celular de 360 dp, com

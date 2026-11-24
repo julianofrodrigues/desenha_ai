@@ -7,6 +7,7 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/widgets/page_header.dart';
 import '../../drawing/screens/drawing_screen.dart';
 import '../../drawing/services/screen_wake_lock.dart';
 import '../../projects/models/category_filter.dart';
@@ -81,8 +82,10 @@ class HomePage extends StatefulWidget {
 
   /// Distância do botão de sol/lua até o canto (dentro da `SafeArea`).
   ///
-  /// Etapa 6C: desceu 20 dp (topo de 8 → 28 dp).
-  static const themeButtonInsets = EdgeInsets.only(top: 8 + 20, right: 8);
+  /// Etapa 6C: desceu 20 dp (topo de 8 → 28 dp). Etapa 6F: o valor vem do
+  /// [PageHeader], para o botão ficar na MESMA altura em todas as telas.
+  static const themeButtonInsets =
+      EdgeInsets.only(top: PageHeader.topInset, right: 8);
 
   final LocalImageSource imageSource;
 
@@ -267,6 +270,7 @@ class _HomePageState extends State<HomePage> {
           projectRepository: _repository,
           cameraServiceFactory: widget.cameraServiceFactory,
           screenWakeLock: widget.screenWakeLock,
+          themeController: widget.themeController,
         ),
       ),
     );
@@ -337,6 +341,7 @@ class _HomePageState extends State<HomePage> {
         builder: (_) => CategoriesScreen(
           categoryRepository: widget.categoryRepository,
           projectRepository: _repository,
+          themeController: widget.themeController,
         ),
       ),
     );
@@ -351,6 +356,7 @@ class _HomePageState extends State<HomePage> {
       initial: _categoryFilter.value,
       categoryRepository: widget.categoryRepository,
       projectRepository: _repository,
+      themeController: widget.themeController,
     );
     // `null` = fechou sem aplicar: o filtro atual continua.
     if (result != null) _categoryFilter.value = result;

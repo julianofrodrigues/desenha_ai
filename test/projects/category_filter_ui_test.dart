@@ -1,6 +1,7 @@
 // Fase 5 (Etapa 5B): faixa de categorias abaixo da busca, seletor com
 // pesquisa/seleção múltipla/criação/remoção e filtro combinado na Home.
 import 'package:desenha_ai/app.dart';
+import 'package:desenha_ai/core/widgets/page_header.dart';
 import 'package:desenha_ai/features/projects/screens/category_filter_screen.dart';
 import 'package:desenha_ai/features/projects/widgets/category_badge.dart';
 import 'package:desenha_ai/features/projects/widgets/category_filter_bar.dart';
@@ -211,7 +212,8 @@ void main() {
       await _pumpHome(tester);
       await _openPicker(tester);
       await _toggleInPicker(tester, 'Animais');
-      await tester.tap(find.byType(CloseButton));
+      // Etapa 6F: a seta de voltar substituiu o "X".
+      await tester.tap(_inPicker(find.byKey(PageHeader.backButtonKey)));
       await settle(tester);
 
       expect(_visible(tester), hasLength(4));
@@ -319,7 +321,7 @@ void main() {
       await _pumpHome(tester);
       await _openPicker(tester);
       await tester.enterText(_inPicker(find.byType(TextField)), 'x');
-      await tester.tap(find.byType(CloseButton));
+      await tester.tap(_inPicker(find.byKey(PageHeader.backButtonKey)));
       await settle(tester);
       expect(find.byType(CategoryFilterScreen), findsNothing);
       expect(tester.takeException(), isNull);

@@ -1,0 +1,239 @@
+00:00 [32m+0[0m: [1m[90mloading C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/debounced_saver_test.dart[0m[0m
+00:00 [32m+0[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/debounced_saver_test.dart: várias mudanças rápidas geram UMA gravação com o último valor[0m
+00:00 [32m+1[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/debounced_saver_test.dart: flush grava na hora e cancela o timer[0m
+00:00 [32m+2[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/debounced_saver_test.dart: flush sem mudança pendente não grava[0m
+00:00 [32m+3[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/debounced_saver_test.dart: dispose grava o pendente e ignora agendamentos depois[0m
+00:00 [32m+4[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/debounced_saver_test.dart: gravações não se sobrepõem e erros não travam a fila[0m
+Falha ao salvar automaticamente: Bad state: disco cheio
+00:01 [32m+5[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: liga a câmera ao abrir e a descarta ao fechar[0m
+00:03 [32m+6[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: retomada e salvamento automático (Fase 3) restaura exatamente os ajustes salvos[0m
+00:03 [32m+7[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: retomada e salvamento automático (Fase 3) várias mudanças seguidas viram UMA gravação (debounce)[0m
+00:04 [32m+8[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: retomada e salvamento automático (Fase 3) várias mudanças seguidas viram UMA gravação (debounce)[0m
+00:04 [32m+9[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: retomada e salvamento automático (Fase 3) várias mudanças seguidas viram UMA gravação (debounce)[0m
+00:04 [32m+10[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: retomada e salvamento automático (Fase 3) várias mudanças seguidas viram UMA gravação (debounce)[0m
+00:04 [32m+11[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: retomada e salvamento automático (Fase 3) várias mudanças seguidas viram UMA gravação (debounce)[0m
+00:04 [32m+12[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: retomada e salvamento automático (Fase 3) várias mudanças seguidas viram UMA gravação (debounce)[0m
+00:04 [32m+13[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: retomada e salvamento automático (Fase 3) várias mudanças seguidas viram UMA gravação (debounce)[0m
+00:04 [32m+14[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: retomada e salvamento automático (Fase 3) sair da tela grava a mudança que ainda estava pendente[0m
+00:04 [32m+15[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: retomada e salvamento automático (Fase 3) minimizar o app grava na hora[0m
+00:04 [32m+16[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: retomada e salvamento automático (Fase 3) sem mudanças, nada é gravado[0m
+00:04 [32m+17[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: tela sempre acesa (wakelock) liga ao abrir e desliga no dispose[0m
+00:04 [32m+18[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: tela sempre acesa (wakelock) continua ligado na Mesa de Luz[0m
+00:04 [32m+19[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: tela sempre acesa (wakelock) desliga ao minimizar e religa ao voltar[0m
+00:04 [32m+20[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: permissão negada oferece a Mesa de Luz e troca de modo sem travar[0m
+00:05 [32m+21[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: permissão negada "Tentar novamente" pede a câmera de novo[0m
+00:05 [32m+22[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: trava travar esconde os controles e bloqueia gestos[0m
+00:05 [32m+23[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: trava toque simples NÃO destrava; toque duplo destrava[0m
+00:05 [32m+24[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: trava segurar por 1,5 s destrava; soltar antes não[0m
+00:05 [32m+25[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: trava com a tela travada, o "voltar" do Android não sai[0m
+00:05 [32m+26[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: arrastar move a imagem e "Resetar posição" volta ao centro[0m
+00:06 [32m+27[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: arrastar move a imagem e "Resetar posição" volta ao centro[0m
+00:06 [32m+28[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: arrastar move a imagem e "Resetar posição" volta ao centro[0m
+00:06 [32m+29[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: arrastar move a imagem e "Resetar posição" volta ao centro[0m
+00:06 [32m+30[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: arrastar move a imagem e "Resetar posição" volta ao centro[0m
+00:06 [32m+31[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: arrastar move a imagem e "Resetar posição" volta ao centro[0m
+00:06 [32m+32[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: arrastar move a imagem e "Resetar posição" volta ao centro[0m
+00:06 [32m+33[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: arrastar move a imagem e "Resetar posição" volta ao centro[0m
+00:06 [32m+34[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: arrastar move a imagem e "Resetar posição" volta ao centro[0m
+00:06 [32m+35[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/categories_test.dart: FileCategoryRepository sem arquivo, não há categorias[0m
+00:06 [32m+36[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: espelhar inverte o eixo X da imagem[0m
+00:06 [32m+37[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: espelhar inverte o eixo X da imagem[0m
+00:06 [32m+38[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/categories_test.dart: FileCategoryRepository recusa nome vazio ou duplicado sem gravar nada[0m
+00:06 [32m+39[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: slider de opacidade começa em 50% e vai de 10% a 100%[0m
+00:06 [32m+40[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: slider de opacidade começa em 50% e vai de 10% a 100%[0m
+00:06 [32m+41[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/categories_test.dart: FileCategoryRepository remove só a categoria escolhida[0m
+00:06 [32m+42[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: lanterna só aparece com a câmera pronta[0m
+00:06 [32m+42[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/categories_test.dart: FileCategoryRepository arquivo corrompido = sem categorias (o app não quebra)[0m
+categories.json ilegível: FormatException: Unexpected character (at character 2)
+{lixo
+ ^
+
+00:06 [32m+43[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: lanterna só aparece com a câmera pronta[0m
+00:06 [32m+44[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/categories_test.dart: remover categoria limpa o vínculo dos projetos só os projetos daquela categoria ficam sem categoria[0m
+00:06 [32m+45[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: lanterna avisa quando o aparelho não tem lanterna[0m
+00:06 [32m+46[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/categories_test.dart: remover categoria limpa o vínculo dos projetos editar categoria não muda o último acesso nem o nome[0m
+00:06 [32m+47[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: lanterna liga quando suportada[0m
+00:06 [32m+48[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/drawing/drawing_screen_test.dart: desliga a câmera em segundo plano e religa ao voltar[0m
+00:08 [32m+49[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/categories_ui_test.dart: badge no card mostra a cor e o nome da categoria[0m
+00:11 [32m+50[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_edit_ui_test.dart: tela "Categorias" cada categoria tem o botão Editar à esquerda do Remover[0m
+00:11 [32m+51[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_edit_ui_test.dart: tela "Categorias" cada categoria tem o botão Editar à esquerda do Remover[0m
+00:11 [32m+52[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/categories_ui_test.dart: categoria no Editar escolher uma categoria salva e mostra a badge na hora[0m
+00:12 [32m+53[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_edit_ui_test.dart: tela "Categorias" o formulário abre com o nome e a cor atuais[0m
+00:12 [32m+54[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/categories_ui_test.dart: categoria no Editar nome e categoria são salvos juntos[0m
+00:13 [32m+55[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_edit_ui_test.dart: tela "Categorias" salvar muda nome e cor na lista e no armazenamento[0m
+00:13 [32m+56[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_edit_ui_test.dart: tela "Categorias" salvar muda nome e cor na lista e no armazenamento[0m
+00:13 [32m+57[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/categories_ui_test.dart: categoria no Editar cancelar não muda a categoria[0m
+00:13 [32m+58[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_edit_ui_test.dart: tela "Categorias" nome de outra categoria é recusado e o diálogo fica aberto[0m
+00:14 [32m+59[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_edit_ui_test.dart: tela "Categorias" nome de outra categoria é recusado e o diálogo fica aberto[0m
+00:14 [32m+60[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/categories_ui_test.dart: tela de categorias criar categoria com nome e cor escolhida[0m
+00:14 [32m+61[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/categories_ui_test.dart: tela de categorias criar categoria com nome e cor escolhida[0m
+00:15 [32m+62[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_edit_ui_test.dart: tela "Categorias" cancelar ou salvar sem mudar nada não grava[0m
+00:15 [32m+63[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/categories_ui_test.dart: tela de categorias nome vazio ou duplicado mostra erro e não fecha o diálogo[0m
+00:15 [32m+64[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_edit_ui_test.dart: paleta de 30 cores no formulário criar e editar mostram as 30 cores[0m
+00:16 [32m+65[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/categories_ui_test.dart: tela de categorias remover pede confirmação e deixa os desenhos sem categoria[0m
+00:16 [32m+66[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_edit_ui_test.dart: paleta de 30 cores no formulário a grade é compacta: não estica o diálogo no tablet[0m
+00:16 [32m+67[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/categories_ui_test.dart: tela de categorias cancelar a remoção mantém a categoria[0m
+00:16 [32m+68[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/categories_ui_test.dart: tela de categorias cancelar a remoção mantém a categoria[0m
+00:16 [32m+69[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_edit_ui_test.dart: reflexo nos cards vinculados editar pelo seletor da faixa atualiza as badges dos cards[0m
+00:16 [32m+70[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_edit_ui_test.dart: reflexo nos cards vinculados editar pelo seletor da faixa atualiza as badges dos cards[0m
+00:18 [32m+71[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_edit_ui_test.dart: reflexo nos cards vinculados editar pela tela "Categorias" atualiza os cards ao voltar[0m
+00:21 [32m+72[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_test.dart: CategoryFilter começa inativo; marcar e desmarcar alternam[0m
+00:21 [32m+73[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_test.dart: CategoryFilter == não depende da ordem em que as categorias foram marcadas[0m
+00:21 [32m+74[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_test.dart: CategoryFilter retainOnly tira categorias que não existem mais[0m
+00:21 [32m+75[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_test.dart: filtro combinado (categorias + busca) sem filtro: igual à Fase 4 (todos + busca por nome)[0m
+00:21 [32m+76[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_test.dart: filtro combinado (categorias + busca) uma categoria: só os desenhos dela[0m
+00:21 [32m+77[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_test.dart: filtro combinado (categorias + busca) a busca do topo procura SÓ dentro das categorias marcadas[0m
+00:21 [32m+78[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_test.dart: filtro combinado (categorias + busca) dentro do filtro, a busca mantém a prioridade de nomes[0m
+00:21 [32m+79[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_test.dart: filtro combinado (categorias + busca) várias categorias: união[0m
+00:21 [32m+80[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_test.dart: filtro combinado (categorias + busca) "Sem categoria": só os sem categoria (inclui categoria apagada)[0m
+00:21 [32m+81[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_test.dart: filtro combinado (categorias + busca) categoria + "Sem categoria": união dos dois conjuntos[0m
+00:23 [32m+82[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca mostra "Sem categoria" neutra e o botão ao lado[0m
+00:23 [32m+83[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca mostra "Sem categoria" neutra e o botão ao lado[0m
+00:23 [32m+84[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca mostra "Sem categoria" neutra e o botão ao lado[0m
+00:23 [32m+85[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca mostra "Sem categoria" neutra e o botão ao lado[0m
+00:23 [32m+86[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca mostra "Sem categoria" neutra e o botão ao lado[0m
+00:23 [32m+87[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca mostra "Sem categoria" neutra e o botão ao lado[0m
+00:23 [32m+88[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca mostra "Sem categoria" neutra e o botão ao lado[0m
+00:23 [32m+89[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca mostra "Sem categoria" neutra e o botão ao lado[0m
+00:23 [32m+90[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca mostra "Sem categoria" neutra e o botão ao lado[0m
+00:23 [32m+91[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca mostra "Sem categoria" neutra e o botão ao lado[0m
+00:24 [32m+92[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca mostra "Sem categoria" neutra e o botão ao lado[0m
+00:24 [32m+93[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca mostra "Sem categoria" neutra e o botão ao lado[0m
+00:25 [32m+94[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca tocar "Sem categoria" na faixa filtra os sem categoria[0m
+00:25 [32m+95[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca tocar "Sem categoria" na faixa filtra os sem categoria[0m
+00:25 [32m+96[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca tocar "Sem categoria" na faixa filtra os sem categoria[0m
+00:26 [32m+96[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/file_project_repository_test.dart: criação sem miniatura, o projeto é criado mesmo assim[0m
+Miniatura não gerada para h39pmnl9mo033m4cg: FormatException: imagem inválida
+00:26 [32m+97[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca tocar "Sem categoria" na faixa filtra os sem categoria[0m
+00:26 [32m+98[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca tocar "Sem categoria" na faixa filtra os sem categoria[0m
+00:26 [32m+99[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca tocar "Sem categoria" na faixa filtra os sem categoria[0m
+00:26 [32m+100[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca tocar "Sem categoria" na faixa filtra os sem categoria[0m
+00:26 [32m+100[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/file_project_repository_test.dart: retomada um project.json corrompido não esconde os outros[0m
+Projeto ignorado (C:\Users\Juliano\AppData\Local\Temp\desenha_ai_testaf1c582f\projects\h39pnnb9xc06r1cv5): FormatException: Unexpected character (at character 2)
+{lixo
+ ^
+
+00:26 [32m+101[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca tocar "Sem categoria" na faixa filtra os sem categoria[0m
+00:26 [32m+102[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca tocar "Sem categoria" na faixa filtra os sem categoria[0m
+00:26 [32m+103[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca tocar "Sem categoria" na faixa filtra os sem categoria[0m
+00:26 [32m+104[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca tocar "Sem categoria" na faixa filtra os sem categoria[0m
+00:26 [32m+105[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca tocar "Sem categoria" na faixa filtra os sem categoria[0m
+00:26 [32m+106[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/file_project_repository_test.dart: renomeação (Fase 4) não perde ajustes salvos depois de a lista ser lida[0m
+00:26 [32m+107[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca categorias marcadas aparecem na faixa e saem pelo "×"[0m
+00:26 [32m+108[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca categorias marcadas aparecem na faixa e saem pelo "×"[0m
+00:26 [32m+109[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca categorias marcadas aparecem na faixa e saem pelo "×"[0m
+00:26 [32m+110[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: faixa abaixo da busca categorias marcadas aparecem na faixa e saem pelo "×"[0m
+00:27 [32m+111[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias pesquisa as categorias em tempo real[0m
+00:28 [32m+112[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias pesquisa as categorias em tempo real[0m
+00:28 [32m+113[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias pesquisa as categorias em tempo real[0m
+00:28 [32m+114[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias pesquisa as categorias em tempo real[0m
+00:28 [32m+115[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias pesquisa as categorias em tempo real[0m
+00:28 [32m+116[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias pesquisa as categorias em tempo real[0m
+00:28 [32m+117[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias pesquisa as categorias em tempo real[0m
+00:28 [32m+118[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias pesquisa as categorias em tempo real[0m
+00:28 [32m+119[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias pesquisa as categorias em tempo real[0m
+00:28 [32m+120[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias pesquisa as categorias em tempo real[0m
+00:28 [32m+121[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias pesquisa as categorias em tempo real[0m
+00:28 [32m+122[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias pesquisa as categorias em tempo real[0m
+00:28 [32m+123[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias pesquisa as categorias em tempo real[0m
+00:28 [32m+124[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias pesquisa as categorias em tempo real[0m
+00:28 [32m+125[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias pesquisa as categorias em tempo real[0m
+00:28 [32m+126[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias pesquisa as categorias em tempo real[0m
+00:28 [32m+127[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias pesquisa as categorias em tempo real[0m
+00:28 [32m+128[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias pesquisa as categorias em tempo real[0m
+00:28 [32m+129[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias pesquisa as categorias em tempo real[0m
+00:28 [32m+130[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/project_names_test.dart: filterProjects (busca) sem nenhum nome, busca pelo nome padrão[0m
+00:28 [32m+131[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/project_names_test.dart: filterProjects (busca) ignora maiúsculas e acentos[0m
+00:28 [32m+132[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias seleção múltipla com "Sem categoria" junto[0m
+00:28 [32m+133[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias seleção múltipla com "Sem categoria" junto[0m
+00:29 [32m+134[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias fechar no "X" não muda o filtro[0m
+00:30 [32m+135[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias "Limpar" desmarca tudo e mostra todos ao aplicar[0m
+00:30 [32m+136[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias "Limpar" desmarca tudo e mostra todos ao aplicar[0m
+00:30 [32m+137[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias "Limpar" desmarca tudo e mostra todos ao aplicar[0m
+00:30 [32m+138[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias "Limpar" desmarca tudo e mostra todos ao aplicar[0m
+00:30 [32m+139[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias "Limpar" desmarca tudo e mostra todos ao aplicar[0m
+00:30 [32m+140[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias "Limpar" desmarca tudo e mostra todos ao aplicar[0m
+00:30 [32m+141[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias "Limpar" desmarca tudo e mostra todos ao aplicar[0m
+00:30 [32m+142[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias "Limpar" desmarca tudo e mostra todos ao aplicar[0m
+00:30 [32m+143[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias "Limpar" desmarca tudo e mostra todos ao aplicar[0m
+00:30 [32m+144[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias "Limpar" desmarca tudo e mostra todos ao aplicar[0m
+00:30 [32m+145[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias "Limpar" desmarca tudo e mostra todos ao aplicar[0m
+00:31 [32m+146[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias cria categoria pela pesquisa ("Criar categoria “x”")[0m
+00:32 [32m+147[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias nome que já existe não oferece "Criar"[0m
+00:32 [32m+148[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/thumbnail_generator_test.dart: reduz mantendo a proporção (maior lado = 256)[0m
+00:33 [32m+149[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias remove categoria (com confirmação) e limpa vínculos e filtro[0m
+00:33 [32m+150[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias remove categoria (com confirmação) e limpa vínculos e filtro[0m
+00:33 [32m+151[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias remove categoria (com confirmação) e limpa vínculos e filtro[0m
+00:33 [32m+152[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias sem categorias, o seletor explica como criar[0m
+00:33 [32m+153[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: seletor de categorias fechar o seletor descarta controller e foco sem erros[0m
+00:34 [32m+154[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: filtro combinado com a busca do topo com categoria marcada, a busca procura só dentro dela[0m
+00:34 [32m+155[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: filtro combinado com a busca do topo com "Sem categoria", a busca funciona sobre esses itens[0m
+00:35 [32m+156[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: filtro combinado com a busca do topo filtro sem nenhum desenho mostra mensagem clara[0m
+00:35 [32m+157[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/projects/category_filter_ui_test.dart: filtro combinado com a busca do topo trocar a categoria de um desenho atualiza o filtro na hora[0m
+00:36 [32m+158[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/home_layout_test.dart: Home sem imagem não tem AppBar, título "desenha_ai" nem etiqueta no topo[0m
+00:38 [32m+159[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/home_layout_test.dart: Home sem imagem botão de sol/lua no canto superior direito, e funciona[0m
+00:38 [32m+160[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/home_layout_test.dart: Home sem imagem botão de sol/lua no canto superior direito, e funciona[0m
+00:38 [32m+161[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/home_layout_test.dart: Home sem imagem botão de sol/lua no canto superior direito, e funciona[0m
+00:38 [32m+162[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/home_layout_test.dart: Home sem imagem botão de sol/lua no canto superior direito, e funciona[0m
+00:38 [32m+163[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/theme_test.dart: FileThemePreferenceStore grava e lê de volta, mesmo com um "app" novo[0m
+00:38 [32m+164[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/home_layout_test.dart: Home sem imagem mostra a marca "Desenha A.I" desenhada, centralizada[0m
+00:38 [32m+165[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/home_layout_test.dart: Home sem imagem mostra a marca "Desenha A.I" desenhada, centralizada[0m
+00:38 [32m+165[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/theme_test.dart: FileThemePreferenceStore arquivo corrompido ou valor desconhecido = segue o sistema[0m
+preferences.json ilegível: FormatException: Unexpected character (at character 2)
+{lixo
+ ^
+
+00:38 [32m+166[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/home_layout_test.dart: Home sem imagem mostra a marca "Desenha A.I" desenhada, centralizada[0m
+00:38 [32m+167[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/home_layout_test.dart: Home sem imagem mostra a marca "Desenha A.I" desenhada, centralizada[0m
+00:38 [32m+168[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/home_layout_test.dart: Home sem imagem mostra a marca "Desenha A.I" desenhada, centralizada[0m
+00:38 [32m+169[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/theme_test.dart: ThemeController alterna a partir do que está visível e salva[0m
+00:38 [32m+170[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/home_layout_test.dart: Home com listagem não tem AppBar, título "desenha_ai" nem etiqueta no topo[0m
+00:38 [32m+170[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/theme_test.dart: ThemeController falha ao salvar não impede a troca nesta sessão[0m
+Não foi possível salvar o tema: FileSystemException: disco cheio, path = ''
+00:38 [32m+171[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/home_layout_test.dart: Home com listagem não tem AppBar, título "desenha_ai" nem etiqueta no topo[0m
+00:39 [32m+172[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/theme_test.dart: app e botão de sol/lua 1ª execução com o sistema ESCURO abre no escuro, com a lua[0m
+00:39 [32m+173[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/theme_test.dart: app e botão de sol/lua 1ª execução com o sistema ESCURO abre no escuro, com a lua[0m
+00:39 [32m+174[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/theme_test.dart: app e botão de sol/lua 1ª execução com o sistema ESCURO abre no escuro, com a lua[0m
+00:39 [32m+175[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/theme_test.dart: app e botão de sol/lua 1ª execução com o sistema ESCURO abre no escuro, com a lua[0m
+00:40 [32m+176[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/home_layout_test.dart: sem imagem: botões lado a lado o botão de categoria abre a tela de categorias[0m
+00:40 [32m+177[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/theme_test.dart: app e botão de sol/lua 1ª execução com o sistema CLARO abre no claro, com o sol[0m
+00:40 [32m+178[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/home_layout_test.dart: sem imagem: botões lado a lado cabe lado a lado num celular em pé (360 dp)[0m
+00:40 [32m+179[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/theme_test.dart: app e botão de sol/lua o botão fica no canto superior direito e é único[0m
+00:40 [32m+180[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/home_layout_test.dart: com listagem: conteúdo abaixo da busca preservado busca, faixa de categorias, cards e botões continuam[0m
+00:41 [32m+181[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/home_layout_test.dart: com listagem: conteúdo abaixo da busca preservado busca, faixa de categorias, cards e botões continuam[0m
+00:41 [32m+182[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/theme_test.dart: app e botão de sol/lua a escolha manual vence o sistema e sobrevive ao reinício[0m
+00:41 [32m+183[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/theme_test.dart: app e botão de sol/lua a escolha manual vence o sistema e sobrevive ao reinício[0m
+00:41 [32m+184[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/home_layout_test.dart: marca e barra de status acompanham o tema ícones da barra de status contrastam com o fundo[0m
+00:41 [32m+185[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/theme_test.dart: app e botão de sol/lua trocar o tema não recria a Home (busca continua)[0m
+00:41 [32m+186[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/theme_test.dart: app e botão de sol/lua trocar o tema não recria a Home (busca continua)[0m
+00:41 [32m+187[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/theme_test.dart: app e botão de sol/lua trocar o tema não recria a Home (busca continua)[0m
+00:41 [32m+188[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/theme_test.dart: app e botão de sol/lua trocar o tema não recria a Home (busca continua)[0m
+00:42 [32m+189[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/theme_test.dart: app e botão de sol/lua trocar o tema não recria a Home (busca continua)[0m
+00:42 [32m+190[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/theme_test.dart: app e botão de sol/lua trocar o tema não recria a Home (busca continua)[0m
+00:42 [32m+191[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/theme_test.dart: app e botão de sol/lua trocar o tema não recria a Home (busca continua)[0m
+00:42 [32m+192[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/theme/theme_test.dart: app e botão de sol/lua sair da tela NO MEIO da animação não vaza o controller[0m
+00:43 [32m+193[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/widget_test.dart: novo desenho sem histórico, mostra a tela de boas-vindas[0m
+00:45 [32m+194[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/widget_test.dart: novo desenho escolher imagem CRIA o projeto (cópia local) e abre o desenho[0m
+00:46 [32m+195[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/widget_test.dart: novo desenho cancelar o seletor não cria projeto nem mostra erro[0m
+00:46 [32m+196[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/widget_test.dart: novo desenho falha na leitura mostra erro e permite tentar de novo[0m
+Falha ao escolher imagem: FormatException: arquivo vazio
+00:47 [32m+197[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/widget_test.dart: novo desenho tela fica acesa só enquanto a tela de desenho está aberta[0m
+00:47 [32m+198[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/widget_test.dart: histórico "Continuar desenhando" lista do acesso mais recente para o mais antigo, com modo[0m
+00:47 [32m+199[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/widget_test.dart: histórico "Continuar desenhando" tocar num item reabre o desenho exatamente como estava[0m
+00:48 [32m+200[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/widget_test.dart: histórico "Continuar desenhando" excluir pede confirmação; "Cancelar" mantém o desenho[0m
+00:48 [32m+201[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/widget_test.dart: histórico "Continuar desenhando" confirmar a exclusão remove o projeto do histórico[0m
+00:48 [32m+202[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/widget_test.dart: histórico "Continuar desenhando" mostra o nome customizado no lugar do nome do arquivo[0m
+00:48 [32m+203[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/widget_test.dart: histórico "Continuar desenhando" excluir o último projeto volta à tela de boas-vindas[0m
+00:49 [32m+204[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/widget_test.dart: renomear (Fase 4) o botão Editar fica à esquerda do botão Remover[0m
+00:49 [32m+205[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/widget_test.dart: renomear (Fase 4) salvar grava o novo nome e atualiza a lista na hora[0m
+00:49 [32m+206[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/widget_test.dart: renomear (Fase 4) confirmar pelo teclado ("concluído") também salva[0m
+00:49 [32m+207[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/widget_test.dart: renomear (Fase 4) cancelar mantém o nome anterior[0m
+00:50 [32m+208[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/widget_test.dart: renomear (Fase 4) campo vazio ou só espaços volta ao nome original[0m
+00:50 [32m+209[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/widget_test.dart: renomear (Fase 4) salvar o mesmo nome não grava nada[0m
+00:50 [32m+210[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/widget_test.dart: renomear (Fase 4) renomear não muda a ordem do histórico[0m
+00:50 [32m+211[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/widget_test.dart: barra de pesquisa (Fase 4) filtra em tempo real, sem acento e sem maiúsculas[0m
+00:51 [32m+212[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/widget_test.dart: barra de pesquisa (Fase 4) busca segue a prioridade de nomes[0m
+00:51 [32m+213[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/widget_test.dart: barra de pesquisa (Fase 4) botão de limpar só aparece com texto e limpa a busca[0m
+00:51 [32m+214[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/widget_test.dart: barra de pesquisa (Fase 4) renomear um item faz a busca achar o nome novo[0m
+00:52 [32m+215[0m: C:/Users/Juliano/Desktop/Projetos/desenha_ai/test/widget_test.dart: barra de pesquisa (Fase 4) a Home descarta o controller e o foco sem erros[0m
+00:52 [32m+216[0m: All tests passed![0m

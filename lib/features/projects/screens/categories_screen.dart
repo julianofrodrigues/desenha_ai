@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/widgets/page_header.dart';
+import '../../theme/services/theme_controller.dart';
 import '../models/project_category.dart';
 import '../services/category_repository.dart';
 import '../services/project_repository.dart';
@@ -16,10 +18,14 @@ class CategoriesScreen extends StatefulWidget {
     super.key,
     required this.categoryRepository,
     required this.projectRepository,
+    required this.themeController,
   });
 
   final CategoryRepository categoryRepository;
   final ProjectRepository projectRepository;
+
+  /// Botão de sol/lua no topo (Etapa 6F: presente em todas as telas).
+  final ThemeController themeController;
 
   @override
   State<CategoriesScreen> createState() => _CategoriesScreenState();
@@ -128,14 +134,31 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     final categories = _categories;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Categorias')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _busy ? null : _create,
         icon: const Icon(Icons.add),
         label: const Text('Nova categoria'),
       ),
       body: SafeArea(
-        child: switch (categories) {
+        child: Column(
+          children: [
+            // Etapas 6E/6F: sem `AppBar`. Seta, sol/lua e título centralizado
+            // ficam no corpo.
+            PageHeader(
+              title: 'Categorias',
+              themeController: widget.themeController,
+            ),
+            Expanded(child: _body(categories)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Corpo da tela (carregando, vazio ou lista). Método e não widget porque
+  /// usa o estado e os callbacks desta tela.
+  Widget _body(List<ProjectCategory>? categories) {
+    return switch (categories) {
           null => const Center(child: CircularProgressIndicator()),
           [] => const _EmptyCategories(),
           // Padrão com tipo: garante ao compilador que `list` não é nula.
@@ -190,9 +213,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 ),
               ),
             ),
-        },
-      ),
-    );
+    };
   }
 }
 
@@ -203,7 +224,9 @@ class _EmptyCategories extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Center(
-      child: Padding(
+      // Etapa 6F: rolável, porque o cabeçalho mais alto deixa pouca altura
+      // num celular deitado (sem isso, haveria overflow).
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
