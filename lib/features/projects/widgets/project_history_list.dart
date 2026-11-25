@@ -7,19 +7,21 @@ import '../models/category_filter.dart';
 import '../models/drawing_project.dart';
 import '../models/project_category.dart';
 import '../models/project_search.dart';
+import '../models/status_filter.dart';
 import '../services/project_repository.dart';
 import 'category_filter_bar.dart';
 import 'project_history_tile.dart';
 import 'project_search_field.dart';
+import 'status_filter_bar.dart';
 
 /// Botão "Novo desenho" + seção "Continuar desenhando" com barra de pesquisa.
 ///
 /// Saiu da `home_page.dart` na Fase 4 para a tela não passar do tamanho
 /// recomendado pelo steering (~300 linhas).
 ///
-/// Rebuilds: digitar na busca ou mudar o filtro de categoria reconstrói SÓ
-/// a barra/faixa que mudou e a lista filtrada. O botão "Novo desenho" e o
-/// título não são reconstruídos.
+/// Rebuilds: digitar na busca ou mudar o filtro de status ou de categoria
+/// reconstrói SÓ a barra/faixa que mudou e a lista filtrada. O botão "Novo
+/// desenho" e o título não são reconstruídos.
 class ProjectHistoryList extends StatelessWidget {
   const ProjectHistoryList({
     super.key,
@@ -33,8 +35,22 @@ class ProjectHistoryList extends StatelessWidget {
     required this.onDelete,
     required this.categoryFilter,
     required this.onOpenCategoryPicker,
+    required this.statusFilter,
+    required this.onChangeStatus,
     this.categoriesById = const {},
   });
+
+  /// Chaves dos títulos "Status dos desenhos" e "Categorias". "Categorias"
+  /// também é o texto do chip da faixa, então os testes acham o título por
+  /// aqui.
+  static const statusLabelKey = ValueKey('history-status-label');
+  static const categoriesLabelKey = ValueKey('history-categories-label');
+
+  /// Filtro por status (etapa final). Pertence à Home, que o descarta.
+  final ValueNotifier<StatusFilter> statusFilter;
+
+  /// Abre a escolha de status de um desenho (botão do card).
+  final ValueChanged<DrawingProject> onChangeStatus;
 
   /// Filtro por categoria (Etapa 5B). Pertence à Home, que o descarta.
   final ValueNotifier<CategoryFilter> categoryFilter;
@@ -136,7 +152,22 @@ class ProjectHistoryList extends StatelessWidget {
                 ),
               ),
             ),
-            // Faixa de categorias logo abaixo da busca (Etapa 5B).
+            // Títulos dos dois filtros: deixam claro qual linha de chips
+            // filtra o quê. São `const` e não escutam nenhum filtro, então
+            // nunca são reconstruídos ao marcar um chip.
+            const _FilterLabel(
+              key: statusLabelKey,
+              text: 'Status dos desenhos',
+            ),
+            // Etapa final: filtro de status ENTRE a busca e as categorias.
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              sliver: SliverToBoxAdapter(
+                child: StatusFilterBar(filter: statusFilter),
+              ),
+            ),
+            const _FilterLabel(key: categoriesLabelKey, text: 'Categorias'),
+            // Faixa de categorias logo abaixo do filtro de status (Etapa 5B).
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               sliver: SliverToBoxAdapter(
@@ -147,28 +178,35 @@ class ProjectHistoryList extends StatelessWidget {
                 ),
               ),
             ),
-            // A lista escuta a busca E o filtro: muda quando qualquer um dos
-            // dois muda. `Listenable.merge` cria um objeto leve; ele é
+            // A lista escuta a busca e os DOIS filtros: muda quando qualquer
+            // um muda. `Listenable.merge` cria um objeto leve; ele é
             // recriado só quando ESTE widget é reconstruído (ex.: a Home
             // recarregou o histórico), e não a cada tecla.
             ListenableBuilder(
-              listenable: Listenable.merge([searchController, categoryFilter]),
+              listenable: Listenable.merge(
+                [searchController, statusFilter, categoryFilter],
+              ),
               builder: (context, _) {
                 final query = searchController.text;
-                final filter = categoryFilter.value;
-                // Categorias primeiro, depois a busca por nome (só dentro
-                // das categorias marcadas).
+                // Status e categorias primeiro, depois a busca por nome (só
+                // dentro dos desenhos que passaram nos filtros).
                 final visible = applyHistoryFilters(
                   projects,
                   query: query,
-                  categoryFilter: filter,
+                  statusFilter: statusFilter.value,
+                  categoryFilter: categoryFilter.value,
                   categoriesById: categoriesById,
                 );
                 if (visible.isEmpty) {
+                  final trimmed = query.trim();
                   return SliverToBoxAdapter(
                     child: _NoResults(
-                      query: query.trim(),
-                      filtered: filter.isActive,
+                      query: trimmed,
+                      // O texto existe em ALGUM desenho? Se sim, quem
+                      // esconde o resultado são os filtros, e a mensagem
+                      // diz isso. Só roda com a lista vazia, então não pesa.
+                      queryMatchesSomething: trimmed.isNotEmpty &&
+                          filterProjects(projects, trimmed).isNotEmpty,
                     ),
                   );
                 }
@@ -190,6 +228,7 @@ class ProjectHistoryList extends StatelessWidget {
                         onOpen: () => onOpen(project),
                         onEdit: () => onEdit(project),
                         onDelete: () => onDelete(project),
+                        onChangeStatus: () => onChangeStatus(project),
                       );
                     },
                   ),
@@ -203,22 +242,60 @@ class ProjectHistoryList extends StatelessWidget {
   }
 }
 
+/// Título discreto acima de cada linha de filtros ("Status dos desenhos",
+/// "Categorias").
+///
+/// `labelLarge` com a cor secundária do tema: aparece, mas sem competir com
+/// "Continuar desenhando" (o título da seção) nem com os chips. A cor vem do
+/// tema, então se ajusta sozinha ao claro e ao escuro. O recuo de 4 dp em
+/// cima separa do bloco anterior sem abrir um buraco na tela.
+class _FilterLabel extends StatelessWidget {
+  const _FilterLabel({super.key, required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
+      sliver: SliverToBoxAdapter(
+        // `header`: o leitor de tela anuncia como título de seção.
+        child: Semantics(
+          header: true,
+          child: Text(
+            text,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _NoResults extends StatelessWidget {
-  const _NoResults({required this.query, required this.filtered});
+  const _NoResults({required this.query, required this.queryMatchesSomething});
 
   final String query;
 
-  /// Há filtro de categoria ativo? Muda a mensagem, para o usuário entender
-  /// que a lista vazia vem do filtro (e não de não ter desenhos).
-  final bool filtered;
+  /// Algum desenho tem esse nome, mas os filtros (status/categoria) o
+  /// esconderam? Muda a mensagem, para o usuário entender que é o FILTRO
+  /// que esvazia a lista (e não a falta de desenhos).
+  final bool queryMatchesSomething;
 
-  String get _message => switch ((query.isEmpty, filtered)) {
-        (true, true) => 'Nenhum desenho nas categorias selecionadas.',
-        (false, true) =>
-          'Nenhum desenho encontrado para “$query” nas categorias '
-              'selecionadas.',
-        _ => 'Nenhum desenho encontrado para “$query”.',
-      };
+  String get _message {
+    // Sem texto, só os filtros podem esvaziar a lista (há desenhos, senão a
+    // Home mostraria a tela inicial).
+    if (query.isEmpty) return 'Nenhum desenho com os filtros selecionados.';
+    if (queryMatchesSomething) {
+      return 'Nenhum desenho encontrado para “$query” com os filtros '
+          'selecionados.';
+    }
+    return 'Nenhum desenho encontrado para “$query”.';
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -201,6 +201,12 @@ void main() {
   group('com listagem: conteúdo abaixo da busca preservado', () {
     testWidgets('busca, faixa de categorias, cards e botões continuam',
         (tester) async {
+      // Tela alta: com a faixa de status (etapa final), o 2º card ficaria
+      // abaixo da área visível de 800x600 e a lista preguiçosa não o
+      // construiria.
+      tester.view.physicalSize = const Size(1000, 1800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
       await _pumpHome(tester, withProjects: true);
 
       expect(find.byType(ProjectSearchField), findsOneWidget);

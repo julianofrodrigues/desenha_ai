@@ -18,6 +18,13 @@ Future<void> _pumpApp(
   required FakeProjectRepository projects,
   required FakeCategoryRepository categories,
 }) async {
+  // Tela alta (tablet em pé): desde os status, cada card tem uma linha de
+  // etiquetas e a lista tem a faixa de status. Na tela padrão dos testes
+  // (800x600) os últimos cards ficariam fora da área visível, e a lista
+  // preguiçosa nem os constrói.
+  tester.view.physicalSize = const Size(1000, 1800);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
   await tester.pumpWidget(
     DesenhaAiApp(
       imageSource: FakeImageSource(() async => null),

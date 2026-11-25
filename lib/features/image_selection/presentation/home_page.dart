@@ -13,6 +13,8 @@ import '../../drawing/services/screen_wake_lock.dart';
 import '../../projects/models/category_filter.dart';
 import '../../projects/models/drawing_project.dart';
 import '../../projects/models/project_category.dart';
+import '../../projects/models/project_status.dart';
+import '../../projects/models/status_filter.dart';
 import '../../projects/screens/categories_screen.dart';
 import '../../projects/screens/category_filter_screen.dart';
 import '../../projects/services/category_repository.dart';
@@ -20,6 +22,7 @@ import '../../projects/services/project_repository.dart';
 import '../../projects/widgets/delete_project_dialog.dart';
 import '../../projects/widgets/edit_project_dialog.dart';
 import '../../projects/widgets/project_history_list.dart';
+import '../../projects/widgets/project_status_dialog.dart';
 import '../../theme/services/theme_controller.dart';
 import '../../theme/widgets/theme_toggle_button.dart';
 import '../data/image_importer.dart';
@@ -134,6 +137,10 @@ class _HomePageState extends State<HomePage> {
   // lista) pelo mesmo motivo da busca: sobrevive às trocas de estado.
   final _categoryFilter = ValueNotifier(CategoryFilter.none);
 
+  // Filtro por status (etapa final), pelo mesmo motivo do de categoria.
+  // Começa com "Todos" marcado (StatusFilter.initial).
+  final _statusFilter = ValueNotifier(StatusFilter.initial);
+
   @override
   void initState() {
     super.initState();
@@ -145,6 +152,7 @@ class _HomePageState extends State<HomePage> {
     _searchController.dispose();
     _searchFocusNode.dispose();
     _categoryFilter.dispose();
+    _statusFilter.dispose();
     super.dispose();
   }
 
@@ -165,6 +173,7 @@ class _HomePageState extends State<HomePage> {
     if (projects.isEmpty) {
       _searchController.clear();
       _categoryFilter.value = CategoryFilter.none;
+      _statusFilter.value = StatusFilter.initial;
     } else {
       _categoryFilter.value =
           _categoryFilter.value.retainOnly(categories.map((c) => c.id));
@@ -249,9 +258,44 @@ class _HomePageState extends State<HomePage> {
     // dois para o usuário VER o que acabou de adicionar.
     _searchController.clear();
     _categoryFilter.value = CategoryFilter.none;
+    // Imagens novas entram como "Não iniciado": garante esse status no
+    // filtro, sem desmarcar os outros que o usuário escolheu.
+    _statusFilter.value =
+        _statusFilter.value.including(ProjectStatus.initial);
     _setStateIfMounted(const _Idle());
     await _loadHistory();
     _showMessage(importSummary(result));
+  }
+
+  /// Botão de status do card (etapa final). É o ÚNICO caminho que muda o
+  /// status: abrir ou fechar o desenho nunca o altera.
+  Future<void> _changeStatus(DrawingProject project) async {
+    _searchFocusNode.unfocus();
+    final chosen =
+        await showProjectStatusDialog(context, current: project.status);
+    // Cancelou ou escolheu o mesmo: nada a gravar.
+    if (chosen == null || chosen == project.status || !mounted) return;
+
+    try {
+      final updated = await _repository.updateStatus(project, chosen);
+      if (!mounted) return;
+      // Troca só o item, sem reler o disco (como no Editar): mudar o
+      // status não altera a ordem da lista.
+      setState(() {
+        _projects = [
+          for (final p in _projects ?? const <DrawingProject>[])
+            p.id == updated.id ? updated : p,
+        ];
+      });
+      _showMessage(statusChangedMessage(
+        chosen,
+        hidden: !_statusFilter.value.matches(updated),
+      ));
+    } catch (error) {
+      debugPrint('Falha ao mudar o status de ${project.id}: $error');
+      _showMessage('Não foi possível alterar o status.');
+      await _loadHistory();
+    }
   }
 
   /// Continuar um desenho do histórico.
@@ -451,6 +495,8 @@ class _HomePageState extends State<HomePage> {
           onOpen: _resume,
           onEdit: _edit,
           onDelete: _confirmDelete,
+          statusFilter: _statusFilter,
+          onChangeStatus: _changeStatus,
         ),
     };
 

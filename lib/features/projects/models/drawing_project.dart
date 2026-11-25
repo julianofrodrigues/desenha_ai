@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../drawing/models/drawing_settings.dart';
+import 'project_status.dart';
 
 /// Um desenho salvo no histórico: a cópia da imagem + os ajustes da tela.
 ///
@@ -21,6 +22,7 @@ class DrawingProject {
     this.settings = const DrawingSettings(),
     this.customName,
     this.categoryId,
+    this.status = ProjectStatus.initial,
   });
 
   /// Versão do formato do `project.json`. Se o formato mudar no futuro,
@@ -63,6 +65,11 @@ class DrawingProject {
   /// fechado no meio da exclusão de uma categoria). A UI trata isso como
   /// "sem categoria" (ver [categoryIn]), então nunca quebra.
   final String? categoryId;
+
+  /// Status do desenho (etapa final). Imagens novas e projetos salvos antes
+  /// desta etapa começam em [ProjectStatus.initial] ("Não iniciado"). Só o
+  /// usuário muda este valor (ver [ProjectStatus]).
+  final ProjectStatus status;
 
   /// A categoria deste projeto dentro de [categoriesById], ou `null` se não
   /// tiver categoria ou se ela não existir mais.
@@ -108,6 +115,7 @@ class DrawingProject {
   DrawingProject rename(String? name) => _copy(
         customName: normalizeCustomName(name, originalName: originalName),
         categoryId: categoryId,
+        status: status,
       );
 
   /// Copia com outra categoria (`null` = sem categoria). Um id em formato
@@ -115,11 +123,25 @@ class DrawingProject {
   DrawingProject withCategory(String? categoryId) => _copy(
         customName: customName,
         categoryId: _validCategoryId(categoryId),
+        status: status,
       );
 
-  /// Cópia que pode trocar os campos ANULÁVEIS editados pelo usuário.
-  /// (`copyWith` não serve para isso: nele, `null` significa "manter".)
-  DrawingProject _copy({String? customName, String? categoryId}) {
+  /// Copia com outro status (etapa final). Não mexe no "último acesso":
+  /// mudar o status não é continuar desenhando.
+  DrawingProject withStatus(ProjectStatus status) => _copy(
+        customName: customName,
+        categoryId: categoryId,
+        status: status,
+      );
+
+  /// Cópia que pode trocar os campos editados pelo usuário, inclusive os
+  /// ANULÁVEIS. (`copyWith` não serve para isso: nele, `null` significa
+  /// "manter".)
+  DrawingProject _copy({
+    required String? customName,
+    required String? categoryId,
+    required ProjectStatus status,
+  }) {
     return DrawingProject(
       id: id,
       originalName: originalName,
@@ -130,6 +152,7 @@ class DrawingProject {
       settings: settings,
       customName: customName,
       categoryId: categoryId,
+      status: status,
     );
   }
 
@@ -161,6 +184,9 @@ class DrawingProject {
       settings: settings ?? this.settings,
       customName: customName,
       categoryId: categoryId,
+      // O salvamento automático da tela de desenho passa por aqui. Manter
+      // o status é o que garante que desenhar nunca o altera sozinho.
+      status: status,
     );
   }
 
@@ -173,6 +199,9 @@ class DrawingProject {
         'customName': customName,
         // Fase 5. Também opcional, pelo mesmo motivo do `customName`.
         'categoryId': categoryId,
+        // Etapa final. Opcional também: um arquivo antigo, sem este campo,
+        // é lido como "Não iniciado" (ver `ProjectStatus.fromJson`).
+        'status': status.jsonValue,
         'imageFile': imageFileName,
         'thumbnailFile': thumbnailFileName,
         // ISO 8601 em UTC: texto legível, ordenável e sem ambiguidade de fuso
@@ -231,6 +260,9 @@ class DrawingProject {
           : null,
       // Id em formato inválido = sem categoria (não derruba o projeto).
       categoryId: _validCategoryId(json['categoryId']),
+      // Ausente (projeto salvo antes desta etapa) ou inválido = "Não
+      // iniciado". Por isso o `schemaVersion` não mudou.
+      status: ProjectStatus.fromJson(json['status']),
       imageFileName: imageFile,
       thumbnailFileName: thumbnailFile as String?,
       createdAt: _readDate(json['createdAt']),
@@ -254,6 +286,7 @@ class DrawingProject {
       other.originalName == originalName &&
       other.customName == customName &&
       other.categoryId == categoryId &&
+      other.status == status &&
       other.imageFileName == imageFileName &&
       other.thumbnailFileName == thumbnailFileName &&
       other.createdAt == createdAt &&
@@ -266,6 +299,7 @@ class DrawingProject {
         originalName,
         customName,
         categoryId,
+        status,
         imageFileName,
         thumbnailFileName,
         createdAt,

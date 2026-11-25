@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import '../models/drawing_project.dart';
+import '../models/project_status.dart';
 
 /// Contrato do histórico de projetos.
 ///
@@ -56,6 +57,19 @@ abstract interface class ProjectRepository {
     required String? customName,
     required String? categoryId,
   });
+
+  /// Grava o status escolhido pelo usuário no botão de status do card
+  /// (etapa final).
+  ///
+  /// É a ÚNICA operação que muda o status: `create` sempre começa em "Não
+  /// iniciado" e `save` (salvamento automático do desenho) o mantém. Como
+  /// [updateDetails], não altera o "último acesso" e parte do que está
+  /// salvo. Devolve o projeto atualizado. Lança [ProjectNotFoundException]
+  /// se o projeto foi excluído.
+  Future<DrawingProject> updateStatus(
+    DrawingProject project,
+    ProjectStatus status,
+  );
 
   /// Tira a categoria [categoryId] de TODOS os projetos que a usavam (eles
   /// ficam sem categoria). Chamado depois de excluir uma categoria.

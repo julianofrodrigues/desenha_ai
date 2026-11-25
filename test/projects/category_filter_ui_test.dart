@@ -217,7 +217,9 @@ void main() {
       await settle(tester);
 
       expect(_visible(tester), hasLength(4));
-      expect(find.text('Categorias'), findsOneWidget);
+      // O chip da faixa continua sem contador. (Pelo tipo: o título
+      // "Categorias" acima da faixa tem o mesmo texto.)
+      expect(find.widgetWithText(ActionChip, 'Categorias'), findsOneWidget);
     });
 
     testWidgets('"Limpar" desmarca tudo e mostra todos ao aplicar',
@@ -346,7 +348,8 @@ void main() {
       expect(_visible(tester), isEmpty);
       expect(
         find.text(
-          'Nenhum desenho encontrado para “rosto” nas categorias selecionadas.',
+          'Nenhum desenho encontrado para “rosto” com os filtros '
+          'selecionados.',
         ),
         findsOneWidget,
       );
@@ -382,7 +385,7 @@ void main() {
 
       expect(_visible(tester), isEmpty);
       expect(
-        find.text('Nenhum desenho nas categorias selecionadas.'),
+        find.text('Nenhum desenho com os filtros selecionados.'),
         findsOneWidget,
       );
     });

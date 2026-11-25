@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../drawing/models/drawing_settings.dart';
 import '../models/drawing_project.dart';
+import '../models/project_status.dart';
 import 'project_repository.dart';
 import 'thumbnail_generator.dart';
 
@@ -185,6 +186,25 @@ class FileProjectRepository implements ProjectRepository {
       final updated =
           current.rename(customName).withCategory(categoryId);
       // Nada mudou: evita uma gravação inútil na memória flash.
+      if (updated != current) await _writeProject(dir, updated);
+      return updated;
+    });
+  }
+
+  @override
+  Future<DrawingProject> updateStatus(
+    DrawingProject project,
+    ProjectStatus status,
+  ) {
+    return _serialized(() async {
+      final dir = _projectDir(project.id);
+      final file = _file(dir, _projectFile);
+      if (!await file.exists()) throw ProjectNotFoundException(project.id);
+
+      // Do DISCO, pelo mesmo motivo do `updateDetails`: não perder ajustes
+      // gravados depois de a lista da Home ser lida.
+      final current = await _readProject(file);
+      final updated = current.withStatus(status);
       if (updated != current) await _writeProject(dir, updated);
       return updated;
     });

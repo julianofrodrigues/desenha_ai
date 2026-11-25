@@ -35,6 +35,17 @@ Widget _app(
       themeController: fakeThemeController(),
     );
 
+/// Monta numa tela alta (tablet em pé). Desde os status (etapa final), cada
+/// card tem uma linha de etiquetas e a lista tem a faixa de status: na tela
+/// padrão dos testes (800x600) os últimos cards ficariam fora da área
+/// visível, e a lista preguiçosa nem os constrói.
+Future<void> _pumpTall(WidgetTester tester, Widget widget) {
+  tester.view.physicalSize = const Size(1000, 1800);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
+  return tester.pumpWidget(widget);
+}
+
 FakeImageSource _picks(String name) =>
     FakeImageSource(() async => PickedImage(name: name, bytes: pngBytes));
 
@@ -46,7 +57,7 @@ Future<void> _goBack(WidgetTester tester) async {
 void main() {
   group('novo desenho', () {
     testWidgets('sem histórico, mostra a tela de boas-vindas', (tester) async {
-      await tester.pumpWidget(_app(FakeImageSource(() async => null)));
+      await _pumpTall(tester, _app(FakeImageSource(() async => null)));
       await tester.pump();
 
       expect(find.text('Escolha uma imagem de referência'), findsOneWidget);
@@ -102,7 +113,7 @@ void main() {
       final source = FakeImageSource(
         () async => throw const FormatException('arquivo vazio'),
       );
-      await tester.pumpWidget(_app(source));
+      await _pumpTall(tester, _app(source));
 
       await tester.tap(find.text('Escolher imagem'));
       await settle(tester);
@@ -119,7 +130,7 @@ void main() {
     testWidgets('tela fica acesa só enquanto a tela de desenho está aberta',
         (tester) async {
       final wakeLock = FakeScreenWakeLock();
-      await tester.pumpWidget(_app(_picks('gato.png'), wakeLock: wakeLock));
+      await _pumpTall(tester, _app(_picks('gato.png'), wakeLock: wakeLock));
       expect(wakeLock.enabled, isFalse); // Home: tela apaga normalmente
 
       await tester.tap(find.text('Escolher imagem'));
@@ -148,7 +159,7 @@ void main() {
           settings: const DrawingSettings(mode: DrawingMode.lightTable),
         ),
       ]);
-      await tester.pumpWidget(_app(_picks('x.png'), repository: repo));
+      await _pumpTall(tester, _app(_picks('x.png'), repository: repo));
       await tester.pump();
 
       final names = tester
@@ -175,7 +186,7 @@ void main() {
       final repo = FakeProjectRepository(
         initial: [sampleProject(name: 'casa.png', settings: saved)],
       );
-      await tester.pumpWidget(_app(_picks('x.png'), repository: repo));
+      await _pumpTall(tester, _app(_picks('x.png'), repository: repo));
       await tester.pump();
 
       await tester.tap(find.text('casa.png'));
@@ -203,7 +214,7 @@ void main() {
       final repo = FakeProjectRepository(
         initial: [sampleProject(name: 'casa.png')],
       );
-      await tester.pumpWidget(_app(_picks('x.png'), repository: repo));
+      await _pumpTall(tester, _app(_picks('x.png'), repository: repo));
       await tester.pump();
 
       await tester.tap(find.byTooltip('Excluir desenho'));
@@ -223,7 +234,7 @@ void main() {
         sampleProject(id: 'a', name: 'fica.png'),
         sampleProject(id: 'b', name: 'sai.png', updatedAt: DateTime(2025, 2, 1)),
       ]);
-      await tester.pumpWidget(_app(_picks('x.png'), repository: repo));
+      await _pumpTall(tester, _app(_picks('x.png'), repository: repo));
       await tester.pump();
 
       // O primeiro item é o mais recente ("sai.png").
@@ -243,7 +254,7 @@ void main() {
       final repo = FakeProjectRepository(initial: [
         sampleProject(name: 'IMG_2025.jpg', customName: 'Gato azul'),
       ]);
-      await tester.pumpWidget(_app(_picks('x.png'), repository: repo));
+      await _pumpTall(tester, _app(_picks('x.png'), repository: repo));
       await tester.pump();
 
       expect(find.text('Gato azul'), findsOneWidget);
@@ -253,7 +264,7 @@ void main() {
     testWidgets('excluir o último projeto volta à tela de boas-vindas',
         (tester) async {
       final repo = FakeProjectRepository(initial: [sampleProject()]);
-      await tester.pumpWidget(_app(_picks('x.png'), repository: repo));
+      await _pumpTall(tester, _app(_picks('x.png'), repository: repo));
       await tester.pump();
 
       await tester.tap(find.byTooltip('Excluir desenho'));
@@ -273,7 +284,7 @@ void main() {
       final repo = FakeProjectRepository(
         initial: [sampleProject(name: 'gato.jpg', customName: customName)],
       );
-      await tester.pumpWidget(_app(_picks('x.png'), repository: repo));
+      await _pumpTall(tester, _app(_picks('x.png'), repository: repo));
       await tester.pump();
       return repo;
     }
@@ -376,7 +387,7 @@ void main() {
         sampleProject(id: 'a', name: 'antigo.png', updatedAt: DateTime(2025)),
         sampleProject(id: 'b', name: 'novo.png', updatedAt: DateTime(2026)),
       ]);
-      await tester.pumpWidget(_app(_picks('x.png'), repository: repo));
+      await _pumpTall(tester, _app(_picks('x.png'), repository: repo));
       await tester.pump();
 
       // Renomeia o item de BAIXO (o mais antigo).
@@ -417,7 +428,7 @@ void main() {
         sampleProject(id: 'b', name: 'gato.png', updatedAt: DateTime(2025, 2)),
         sampleProject(id: 'c', name: '', updatedAt: DateTime(2025, 1)),
       ]);
-      await tester.pumpWidget(_app(_picks('x.png'), repository: repo));
+      await _pumpTall(tester, _app(_picks('x.png'), repository: repo));
       await tester.pump();
     }
 

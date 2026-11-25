@@ -361,3 +361,24 @@ Detalhes: `docs/08-selecao-multipla-de-imagens.md`.
   categoria são limpos para as novas aparecerem.
 - Cancelar não é erro; uma imagem ruim não impede as outras; se todas
   falharem, tela de erro com "Tentar novamente".
+
+---
+
+## Etapa final · Gerenciador manual de status 🚧 (aguardando testes no aparelho)
+
+Detalhes: `docs/09-status-dos-desenhos.md`.
+
+- 4 status: **Não iniciado** (padrão de toda imagem nova), **Em andamento**,
+  **Concluído** e **Arquivado**, com ícone e cor próprios, em tons
+  diferentes para o modo claro e o escuro (contraste ≥ 4,5:1 testado).
+- Controle 100% manual: só o botão de status do card muda o status. Abrir,
+  desenhar e fechar a tela de desenho não mexem nele.
+- Gravado no `project.json` (`"status"`). Projetos antigos, sem o campo,
+  abrem como "Não iniciado"; o `schemaVersion` continua 1.
+- Card: botão de status (bandeira) à esquerda do Editar, diálogo com os 4
+  status (um toque salva) e badge de status à esquerda da categoria.
+- Filtro de status com "Todos" + os 4 chips direto na tela, entre a busca
+  e as categorias, sob o título "Status dos desenhos"; a faixa de
+  categorias ganhou o título "Categorias". Abre com "Todos" marcado (todos
+  os desenhos à vista); marcar um status desmarca "Todos", desmarcar o
+  último o marca de novo; combina com a busca e as categorias.

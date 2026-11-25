@@ -9,6 +9,7 @@ import 'package:desenha_ai/features/image_selection/data/local_image_source.dart
 import 'package:desenha_ai/features/projects/models/drawing_project.dart';
 import 'package:desenha_ai/features/projects/models/project_category.dart';
 import 'package:desenha_ai/features/projects/models/project_search.dart';
+import 'package:desenha_ai/features/projects/models/project_status.dart';
 import 'package:desenha_ai/features/projects/services/category_repository.dart';
 import 'package:desenha_ai/features/projects/services/project_repository.dart';
 import 'package:desenha_ai/features/theme/services/theme_controller.dart';
@@ -202,6 +203,24 @@ class FakeProjectRepository implements ProjectRepository {
     return updated;
   }
 
+  /// Cada status gravado por `updateStatus`, na ordem.
+  final statusChanges = <({String id, ProjectStatus status})>[];
+
+  @override
+  Future<DrawingProject> updateStatus(
+    DrawingProject project,
+    ProjectStatus status,
+  ) async {
+    final current = _projects[project.id];
+    if (current == null) throw ProjectNotFoundException(project.id);
+    statusChanges.add((id: project.id, status: status));
+    // Como o repositório real: parte do estado guardado e não muda o
+    // "último acesso".
+    final updated = current.withStatus(status);
+    _projects[project.id] = updated;
+    return updated;
+  }
+
   @override
   Future<int> clearCategory(String categoryId) async {
     var changed = 0;
@@ -298,6 +317,7 @@ DrawingProject sampleProject({
   String name = 'ref.png',
   String? customName,
   String? categoryId,
+  ProjectStatus status = ProjectStatus.initial,
   DrawingSettings settings = const DrawingSettings(),
   DateTime? updatedAt,
 }) {
@@ -307,6 +327,7 @@ DrawingProject sampleProject({
     originalName: name,
     customName: customName,
     categoryId: categoryId,
+    status: status,
     imageFileName: 'image.png',
     thumbnailFileName: null,
     createdAt: date,

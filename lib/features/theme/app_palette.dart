@@ -45,6 +45,31 @@ abstract final class AppPalette {
   static const darkText = Color(0xFFEDEBF7);
   static const darkTextMuted = Color(0xFFA9A6BD);
 
+  // ---- Status dos desenhos (etapa final) -----------------------------------
+  //
+  // Um tom para cada modo. No CLARO, tons escuros (contraste de ~5:1 ou mais
+  // sobre o card branco); no ESCURO, tons claros (~8:1 ou mais sobre o card
+  // grafite). Um único tom não serve para os dois: o âmbar que se lê bem no
+  // escuro some no branco. Há teste conferindo o contraste mínimo de 4,5:1.
+
+  /// Não iniciado: ardósia (neutro, "ainda parado").
+  static const statusNotStartedLight = Color(0xFF526075);
+  static const statusNotStartedDark = Color(0xFFA9B4C6);
+
+  /// Em andamento: âmbar (atenção, "na mesa").
+  static const statusInProgressLight = Color(0xFFB45309);
+  static const statusInProgressDark = Color(0xFFFBBF4C);
+
+  /// Concluído: verde (pronto).
+  static const statusDoneLight = Color(0xFF15803D);
+  static const statusDoneDark = Color(0xFF4ADE80);
+
+  /// Arquivado: cinza-arroxeado frio (guardado, fora do caminho). Puxa para
+  /// o violeta da marca para não se confundir com a ardósia do "Não
+  /// iniciado".
+  static const statusArchivedLight = Color(0xFF6A6288);
+  static const statusArchivedDark = Color(0xFFB7AFCF);
+
   // ---- Botão de tema -------------------------------------------------------
 
   /// Sol (modo claro) e lua (modo escuro).

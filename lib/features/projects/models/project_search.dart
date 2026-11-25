@@ -1,5 +1,6 @@
 import 'category_filter.dart';
 import 'drawing_project.dart';
+import 'status_filter.dart';
 
 /// Filtra o histórico pelo texto da barra de pesquisa (Fase 4).
 ///
@@ -36,28 +37,34 @@ List<DrawingProject> filterProjects(
 bool _matchesAll(String name, List<String> terms) =>
     terms.every(name.contains);
 
-/// Filtro COMBINADO do histórico (Fase 5, Etapa 5B): primeiro as categorias,
-/// depois a busca por nome.
+/// Filtro COMBINADO do histórico: status (etapa final), categorias (Fase 5,
+/// Etapa 5B) e busca por nome (Fase 4). Um desenho só aparece se passar nos
+/// TRÊS ao mesmo tempo.
 ///
-/// A ordem é a regra pedida: com categorias marcadas, a barra de pesquisa
-/// procura SÓ dentro dos desenhos dessas categorias. A busca continua usando
-/// a prioridade de nomes da Fase 4 (customizado > original > "Imagem"),
-/// porque reaproveita [filterProjects].
+/// Com status ou categorias marcados, a barra de pesquisa procura SÓ dentro
+/// desses desenhos. A busca continua usando a prioridade de nomes da Fase 4
+/// (customizado > original > "Imagem"), porque reaproveita
+/// [filterProjects].
 ///
-/// Sem filtro de categoria, o resultado é idêntico ao da Fase 4.
+/// [statusFilter] tem padrão [StatusFilter.none] (sem filtro de status):
+/// sem ele e sem categorias, o resultado é idêntico ao da Fase 4.
 List<DrawingProject> applyHistoryFilters(
   List<DrawingProject> projects, {
   required String query,
   required CategoryFilter categoryFilter,
   required Map<String, Object?> categoriesById,
+  StatusFilter statusFilter = StatusFilter.none,
 }) {
-  final inCategories = categoryFilter.isActive
+  final filtered = statusFilter.isActive || categoryFilter.isActive
       ? [
+          // Uma passada só pela lista, com os dois filtros juntos.
           for (final p in projects)
-            if (categoryFilter.matches(p, categoriesById)) p,
+            if (statusFilter.matches(p) &&
+                categoryFilter.matches(p, categoriesById))
+              p,
         ]
       : projects;
-  return filterProjects(inCategories, query);
+  return filterProjects(filtered, query);
 }
 
 /// Minúsculas, sem acentos e com espaços simples.
