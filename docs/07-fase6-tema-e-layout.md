@@ -598,12 +598,12 @@ As telas recebem o `ThemeController` pelo construtor (`themeController:`),
 como os outros serviços, então os testes usam o `fakeThemeController()`.
 
 ### 9.4 Home: marca 30 dp abaixo do sol/lua
-Na listagem, `ProjectHistoryList.titleTopInset` passou de 42 para
-`PageHeader.topInset + ThemeToggleButton.size + 30` = 28 + 64 + 30 =
-**122 dp**. A marca e tudo abaixo dela (Novo desenho, busca, faixa, cards)
-descem juntos, porque estão no mesmo `CustomScrollView`, que rola. Por isso
-não há overflow e nada muda no custo de rolagem. A tela sem imagem continua
-centralizada como antes.
+Na listagem, a marca fica 28 + 64 + 30 = **122 dp** abaixo do topo. A marca
+e tudo abaixo dela (Novo desenho, busca, faixa, cards) descem juntos,
+porque estão no mesmo `CustomScrollView`, que rola. Por isso não há
+overflow e nada muda no custo de rolagem. A tela sem imagem continua
+centralizada como antes. (Na seção 11, os 92 dp do botão saíram da lista e
+viraram uma faixa fixa; `titleTopInset` ficou só com os 30 dp.)
 
 ### 9.5 Testes
 - `test/theme/screens_without_header_test.dart` (novo):
@@ -703,3 +703,46 @@ nada.
    "Aplicar" mostra a contagem.
 3. Pesquise parte de um nome e toque em "Selecionar todas": só as exibidas
    são marcadas; ao apagar a pesquisa, as marcadas antes continuam.
+
+## 11. Home: sol/lua fixo durante a rolagem da listagem
+
+### 11.1 A causa
+O botão de sol/lua é uma camada `Positioned` por cima do conteúdo, no
+`Stack` da Home. Já a listagem (`CustomScrollView`) ocupava a tela inteira,
+desde o topo. Os 122 dp acima da marca eram só um recuo DENTRO da lista.
+Ao rolar, esse recuo subia junto, e a busca, os filtros de status e
+categorias e os cards passavam por baixo do botão. Por isso o botão parecia
+"andar" sobre o conteúdo e ficava sobreposto a ele.
+
+### 11.2 A correção
+A Home reserva uma faixa fixa no topo, fora da área rolável:
+`HomePage.themeBandHeight` = `PageHeader.topInset` + `ThemeToggleButton.size`
+= 28 + 64 = **92 dp**. A listagem fica num `Padding(top: 92)`, então a
+área rolável começa logo abaixo do botão. O `CustomScrollView` recorta o
+conteúdo na própria borda, e nada rola por cima nem por baixo do sol/lua.
+
+- O botão continua no mesmo `Positioned(top: 0, right: 0)` e no mesmo lugar
+  (28 dp do topo, 8 dp da direita), igual às outras telas.
+- `ProjectHistoryList.titleTopInset` passou de 122 para **30 dp**: o resto
+  do espaço agora é a faixa fixa. Com a lista no início, a marca continua a
+  122 dp do topo, então o visual não mudou.
+- A faixa usa o fundo do próprio `Scaffold`, sem cor, borda ou sombra, e
+  acompanha o claro e o escuro sozinha.
+- Rebuilds: nada novo. O `Padding` é `const` e o toggle continua
+  reconstruindo só o próprio botão (e o `MaterialApp`, na troca de tema).
+- A tela inicial sem imagem não mudou: ela não rola, e o bloco central
+  continua centralizado na tela inteira.
+
+### 11.3 Testes
+`test/theme/home_layout_test.dart`:
+- `themeBandHeight` é 92 e `titleTopInset` é 30; a marca continua 30 dp
+  abaixo da base do botão.
+- Novo: num celular em pé (360 x 740) com 12 desenhos, a área rolável começa
+  na base do botão. Depois de várias rolagens para cima e para baixo, o
+  botão fica no mesmo retângulo, a área rolável nunca o alcança, a lista
+  rolou mais de 200 dp e o botão ainda troca o tema.
+
+### 11.4 Como testar no aparelho
+1. Com vários desenhos, role a Home para baixo e para cima.
+2. O sol/lua fica parado no canto, e a busca, os filtros e os cards somem na
+   borda de baixo do botão, sem passar por trás dele.

@@ -2,6 +2,7 @@
 // superior direito, botões lado a lado sem imagem e marca "Desenha A.I"
 // desenhada.
 import 'package:desenha_ai/app.dart';
+import 'package:desenha_ai/features/image_selection/presentation/home_page.dart';
 import 'package:desenha_ai/features/image_selection/presentation/widgets/home_status_views.dart';
 import 'package:desenha_ai/features/projects/screens/categories_screen.dart';
 import 'package:desenha_ai/features/projects/screens/category_filter_screen.dart';
@@ -61,8 +62,9 @@ void main() {
     final state = withProjects ? 'com listagem' : 'sem imagem';
 
     group('Home $state', () {
-      testWidgets('não tem AppBar, título "desenha_ai" nem etiqueta no topo',
-          (tester) async {
+      testWidgets('não tem AppBar, título "desenha_ai" nem etiqueta no topo', (
+        tester,
+      ) async {
         await _pumpHome(tester, withProjects: withProjects);
 
         expect(find.byType(AppBar), findsNothing);
@@ -72,8 +74,9 @@ void main() {
         expect(find.byTooltip('Categorias'), findsNothing);
       });
 
-      testWidgets('botão de sol/lua no canto superior direito, e funciona',
-          (tester) async {
+      testWidgets('botão de sol/lua no canto superior direito, e funciona', (
+        tester,
+      ) async {
         await _pumpHome(tester, withProjects: withProjects);
 
         final button = find.byType(ThemeToggleButton);
@@ -100,8 +103,9 @@ void main() {
         expect(_visibleBrightness(tester), isNot(before));
       });
 
-      testWidgets('mostra a marca "Desenha A.I" desenhada, centralizada',
-          (tester) async {
+      testWidgets('mostra a marca "Desenha A.I" desenhada, centralizada', (
+        tester,
+      ) async {
         await _pumpHome(tester, withProjects: withProjects);
 
         final logo = find.byType(DesenhaAiLogo);
@@ -145,8 +149,9 @@ void main() {
   }
 
   group('sem imagem: botões lado a lado', () {
-    testWidgets('"Escolher imagem" e "Categorias" na mesma linha e estilo',
-        (tester) async {
+    testWidgets('"Escolher imagem" e "Categorias" na mesma linha e estilo', (
+      tester,
+    ) async {
       await _pumpHome(tester);
 
       final pick = find.byKey(HomeWelcomeView.pickButtonKey);
@@ -167,7 +172,10 @@ void main() {
 
       // Ícone de etiqueta junto ao botão de categoria.
       expect(
-        find.descendant(of: categories, matching: find.byIcon(Icons.label_outline)),
+        find.descendant(
+          of: categories,
+          matching: find.byIcon(Icons.label_outline),
+        ),
         findsOneWidget,
       );
       expect(
@@ -176,16 +184,16 @@ void main() {
       );
     });
 
-    testWidgets('o botão de categoria abre a tela de categorias',
-        (tester) async {
+    testWidgets('o botão de categoria abre a tela de categorias', (
+      tester,
+    ) async {
       await _pumpHome(tester);
       await tester.tap(find.byKey(HomeWelcomeView.categoriesButtonKey));
       await settle(tester);
       expect(find.byType(CategoriesScreen), findsOneWidget);
     });
 
-    testWidgets('cabe lado a lado num celular em pé (360 dp)',
-        (tester) async {
+    testWidgets('cabe lado a lado num celular em pé (360 dp)', (tester) async {
       tester.view.physicalSize = const Size(360, 740);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -199,8 +207,9 @@ void main() {
   });
 
   group('com listagem: conteúdo abaixo da busca preservado', () {
-    testWidgets('busca, faixa de categorias, cards e botões continuam',
-        (tester) async {
+    testWidgets('busca, faixa de categorias, cards e botões continuam', (
+      tester,
+    ) async {
       // Tela alta: com a faixa de status (etapa final), o 2º card ficaria
       // abaixo da área visível de 800x600 e a lista preguiçosa não o
       // construiria.
@@ -245,14 +254,16 @@ void main() {
       addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
       await _pumpHome(tester);
 
-      DesenhaAiLogoPainter painter() => tester
-          .widget<CustomPaint>(
-            find.descendant(
-              of: find.byType(DesenhaAiLogo),
-              matching: find.byType(CustomPaint),
-            ),
-          )
-          .painter! as DesenhaAiLogoPainter;
+      DesenhaAiLogoPainter painter() =>
+          tester
+                  .widget<CustomPaint>(
+                    find.descendant(
+                      of: find.byType(DesenhaAiLogo),
+                      matching: find.byType(CustomPaint),
+                    ),
+                  )
+                  .painter!
+              as DesenhaAiLogoPainter;
 
       expect(painter().start, AppTheme.light.colorScheme.primary);
 
@@ -262,8 +273,9 @@ void main() {
       expect(painter().start, AppTheme.dark.colorScheme.primary);
     });
 
-    testWidgets('ícones da barra de status contrastam com o fundo',
-        (tester) async {
+    testWidgets('ícones da barra de status contrastam com o fundo', (
+      tester,
+    ) async {
       tester.platformDispatcher.platformBrightnessTestValue = Brightness.light;
       addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
       await _pumpHome(tester);
@@ -286,11 +298,14 @@ void main() {
   });
 
   group('Etapa 6C: ajustes finos', () {
-    testWidgets('Etapa 6F: a marca fica 30 dp abaixo do botão de sol/lua',
-        (tester) async {
+    testWidgets('Etapa 6F: a marca fica 30 dp abaixo do botão de sol/lua', (
+      tester,
+    ) async {
       await _pumpHome(tester, withProjects: true);
-      // 28 (topo do botão) + 64 (altura) + 30 = 122.
-      expect(ProjectHistoryList.titleTopInset, 122);
+      // A faixa fixa do botão (28 + 64 = 92) fica fora da lista; dentro
+      // dela sobram só os 30 dp. Na tela: 92 + 30 = 122.
+      expect(HomePage.themeBandHeight, 92);
+      expect(ProjectHistoryList.titleTopInset, 30);
       final toggle = tester.getRect(find.byType(ThemeToggleButton));
       final logo = tester.getRect(find.byType(DesenhaAiLogo));
       expect(logo.top - toggle.bottom, closeTo(30, 0.5));
@@ -302,10 +317,14 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('botão de sol/lua maior: área de 64 dp e ícone de 36 dp',
-        (tester) async {
+    testWidgets('botão de sol/lua maior: área de 64 dp e ícone de 36 dp', (
+      tester,
+    ) async {
       await _pumpHome(tester);
-      expect(tester.getSize(find.byType(ThemeToggleButton)), const Size(64, 64));
+      expect(
+        tester.getSize(find.byType(ThemeToggleButton)),
+        const Size(64, 64),
+      );
       final icon = tester.widget<IconButton>(
         find.descendant(
           of: find.byType(ThemeToggleButton),
@@ -316,8 +335,9 @@ void main() {
       expect(tester.getSize(find.byIcon(Icons.light_mode)), const Size(36, 36));
     });
 
-    testWidgets('a SafeArea do aparelho é respeitada (barra de status)',
-        (tester) async {
+    testWidgets('a SafeArea do aparelho é respeitada (barra de status)', (
+      tester,
+    ) async {
       // Simula 24 dp de barra de status: o botão desce junto.
       tester.view.padding = const FakeViewPadding(top: 24);
       tester.view.devicePixelRatio = 1;
@@ -331,55 +351,122 @@ void main() {
     });
 
     testWidgets(
-        'tela inicial: descer/aumentar o botão NÃO mexe no layout central',
-        (tester) async {
-      await _pumpHome(tester);
-      final screen = tester.getSize(find.byType(Scaffold).first);
+      'tela inicial: descer/aumentar o botão NÃO mexe no layout central',
+      (tester) async {
+        await _pumpHome(tester);
+        final screen = tester.getSize(find.byType(Scaffold).first);
 
-      // O botão está numa camada própria (Positioned), fora do conteúdo.
-      expect(
-        find.descendant(
-          of: find.byType(HomeWelcomeView),
-          matching: find.byType(ThemeToggleButton),
-        ),
-        findsNothing,
-      );
-      expect(
-        find.ancestor(
-          of: find.byType(ThemeToggleButton),
-          matching: find.byWidgetPredicate(
-            (w) => w is Positioned && w.top == 0 && w.right == 0,
+        // O botão está numa camada própria (Positioned), fora do conteúdo.
+        expect(
+          find.descendant(
+            of: find.byType(HomeWelcomeView),
+            matching: find.byType(ThemeToggleButton),
           ),
-        ),
-        findsOneWidget,
-      );
+          findsNothing,
+        );
+        expect(
+          find.ancestor(
+            of: find.byType(ThemeToggleButton),
+            matching: find.byWidgetPredicate(
+              (w) => w is Positioned && w.top == 0 && w.right == 0,
+            ),
+          ),
+          findsOneWidget,
+        );
 
-      // A tela inicial ocupa a área inteira e o bloco central continua
-      // centralizado nas duas direções.
-      expect(tester.getRect(find.byType(HomeWelcomeView)),
-          Offset.zero & screen);
-      final logo = tester.getRect(find.byType(DesenhaAiLogo));
-      final buttons = tester.getRect(find.byKey(HomeWelcomeView.pickButtonKey))
-          .expandToInclude(
-              tester.getRect(find.byKey(HomeWelcomeView.categoriesButtonKey)));
-      final block = logo.expandToInclude(buttons);
-      expect(block.center.dx, closeTo(screen.width / 2, 1));
-      expect(block.center.dy, closeTo(screen.height / 2, 1));
+        // A tela inicial ocupa a área inteira e o bloco central continua
+        // centralizado nas duas direções.
+        expect(
+          tester.getRect(find.byType(HomeWelcomeView)),
+          Offset.zero & screen,
+        );
+        final logo = tester.getRect(find.byType(DesenhaAiLogo));
+        final buttons = tester
+            .getRect(find.byKey(HomeWelcomeView.pickButtonKey))
+            .expandToInclude(
+              tester.getRect(find.byKey(HomeWelcomeView.categoriesButtonKey)),
+            );
+        final block = logo.expandToInclude(buttons);
+        expect(block.center.dx, closeTo(screen.width / 2, 1));
+        expect(block.center.dy, closeTo(screen.height / 2, 1));
 
-      // Os dois botões continuam lado a lado e com o mesmo tamanho.
-      final a = tester.getRect(find.byKey(HomeWelcomeView.pickButtonKey));
-      final b =
-          tester.getRect(find.byKey(HomeWelcomeView.categoriesButtonKey));
-      expect(a.center.dy, closeTo(b.center.dy, 1));
-      expect(a.size, b.size);
+        // Os dois botões continuam lado a lado e com o mesmo tamanho.
+        final a = tester.getRect(find.byKey(HomeWelcomeView.pickButtonKey));
+        final b = tester.getRect(
+          find.byKey(HomeWelcomeView.categoriesButtonKey),
+        );
+        expect(a.center.dy, closeTo(b.center.dy, 1));
+        expect(a.size, b.size);
 
-      // E o botão de sol/lua não fica por cima de nada do bloco central.
-      final toggle = tester.getRect(find.byType(ThemeToggleButton));
-      expect(toggle.overlaps(block), isFalse);
-    });
+        // E o botão de sol/lua não fica por cima de nada do bloco central.
+        final toggle = tester.getRect(find.byType(ThemeToggleButton));
+        expect(toggle.overlaps(block), isFalse);
+      },
+    );
 
-    testWidgets('celular em pé (360 dp): título e botão não se encostam',
-        (tester) async {
+    testWidgets(
+      'rolar a listagem não move o botão de sol/lua nem passa por baixo dele',
+      (tester) async {
+        // Celular em pé e muitos desenhos: a lista é bem maior que a tela.
+        tester.view.physicalSize = const Size(360, 740);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final theme = ThemeController(store: FakeThemePreferenceStore());
+        addTearDown(theme.dispose);
+        await tester.pumpWidget(
+          DesenhaAiApp(
+            imageSource: FakeImageSource(() async => null),
+            projectRepository: FakeProjectRepository(
+              initial: [
+                for (var i = 0; i < 12; i++)
+                  sampleProject(id: 'p$i', name: 'desenho $i.png'),
+              ],
+            ),
+            categoryRepository: FakeCategoryRepository(),
+            cameraServiceFactory: FakeCameraService.new,
+            screenWakeLock: FakeScreenWakeLock(),
+            themeController: theme,
+          ),
+        );
+        // Espera o fade do `AnimatedSwitcher` (boas-vindas → listagem).
+        await settle(tester);
+
+        final toggle = find.byType(ThemeToggleButton);
+        final before = tester.getRect(toggle);
+        final list = find.byType(CustomScrollView);
+        // A área rolável começa logo abaixo do botão, e não no topo da tela.
+        expect(tester.getRect(list).top, closeTo(before.bottom, 0.5));
+
+        for (final delta in [-300.0, -300.0, 200.0, -1000.0]) {
+          await tester.drag(list, Offset(0, delta));
+          await tester.pump();
+          // O botão continua parado e presente.
+          expect(tester.getRect(toggle), before);
+          expect(toggle, findsOneWidget);
+          // A área rolável (que recorta o conteúdo) não alcança o botão.
+          expect(tester.getRect(list).overlaps(before), isFalse);
+        }
+
+        // Rolou de fato. Conferimos a posição da rolagem, e não a marca: a
+        // lista preguiçosa pode já ter descartado a marca lá em cima.
+        final scrollable = tester.state<ScrollableState>(
+          find.descendant(of: list, matching: find.byType(Scrollable)).first,
+        );
+        expect(scrollable.position.pixels, greaterThan(200));
+
+        // E o botão continua funcionando depois da rolagem.
+        final brightness = _visibleBrightness(tester);
+        await tester.tap(toggle);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+        expect(_visibleBrightness(tester), isNot(brightness));
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets('celular em pé (360 dp): título e botão não se encostam', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(360, 740);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);

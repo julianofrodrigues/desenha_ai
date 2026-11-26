@@ -1,8 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
-import '../../../core/widgets/page_header.dart';
 import '../../theme/widgets/desenha_ai_logo.dart';
-import '../../theme/widgets/theme_toggle_button.dart';
 import '../models/category_filter.dart';
 import '../models/drawing_project.dart';
 import '../models/project_category.dart';
@@ -58,15 +56,13 @@ class ProjectHistoryList extends StatelessWidget {
   /// Abre o seletor de categorias (pesquisar, criar, remover, marcar).
   final VoidCallback onOpenCategoryPicker;
 
-  /// Espaço acima do título (marca "Desenha A.I").
+  /// Espaço acima do título (marca "Desenha A.I") dentro da lista.
   ///
-  /// Etapa 6C: era 12 dp; desceu para 42 dp.
-  /// Etapa 6F: a marca (e tudo abaixo dela) fica [gapBelowThemeButton] abaixo
-  /// da BASE do botão de sol/lua: 28 (topo do botão) + 64 (altura) + 30 =
-  /// 122 dp. Calculado a partir das constantes do botão: se ele mudar de
-  /// tamanho ou de altura, o espaço de 30 dp continua valendo.
-  static const double titleTopInset =
-      PageHeader.topInset + ThemeToggleButton.size + gapBelowThemeButton;
+  /// A faixa do botão de sol/lua (28 dp de recuo + 64 dp do botão) NÃO faz
+  /// mais parte da lista: a Home a reserva fora da área rolável
+  /// (`HomePage.themeBandHeight`). Por isso a lista começa já abaixo do
+  /// botão, e aqui sobra só o espaço de [gapBelowThemeButton].
+  static const double titleTopInset = gapBelowThemeButton;
 
   /// Espaço entre a base do botão de sol/lua e a marca (Etapa 6F).
   static const double gapBelowThemeButton = 30;
@@ -183,9 +179,11 @@ class ProjectHistoryList extends StatelessWidget {
             // recriado só quando ESTE widget é reconstruído (ex.: a Home
             // recarregou o histórico), e não a cada tecla.
             ListenableBuilder(
-              listenable: Listenable.merge(
-                [searchController, statusFilter, categoryFilter],
-              ),
+              listenable: Listenable.merge([
+                searchController,
+                statusFilter,
+                categoryFilter,
+              ]),
               builder: (context, _) {
                 final query = searchController.text;
                 // Status e categorias primeiro, depois a busca por nome (só
@@ -205,7 +203,8 @@ class ProjectHistoryList extends StatelessWidget {
                       // O texto existe em ALGUM desenho? Se sim, quem
                       // esconde o resultado são os filtros, e a mensagem
                       // diz isso. Só roda com a lista vazia, então não pesa.
-                      queryMatchesSomething: trimmed.isNotEmpty &&
+                      queryMatchesSomething:
+                          trimmed.isNotEmpty &&
                           filterProjects(projects, trimmed).isNotEmpty,
                     ),
                   );

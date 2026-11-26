@@ -43,6 +43,10 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  # Gera os ícones do launcher (mipmap) a partir de assets/icon/. Só roda
+  # quando chamado à mão (`dart run flutter_launcher_icons`); não entra no
+  # app nem faz nenhuma chamada de rede no aparelho.
+  flutter_launcher_icons: ^0.14.3
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -50,6 +54,20 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+
+# Configuração do ícone do app (pacote flutter_launcher_icons). Fica no NÍVEL
+# DE CIMA do arquivo, e não dentro de dev_dependencies: lá dentro ela seria
+# lida como uma segunda dependência com o mesmo nome.
+#
+# A imagem fica em assets/icon/ só como FONTE para gerar os mipmap do Android.
+# Por isso ela NÃO está listada em `flutter: assets:` (não precisa ir dentro
+# do app, o que só aumentaria o tamanho do APK).
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon/app_icon.jpg"
+  adaptive_icon_background: "#121212"
+  adaptive_icon_foreground: "assets/icon/app_icon.jpg"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

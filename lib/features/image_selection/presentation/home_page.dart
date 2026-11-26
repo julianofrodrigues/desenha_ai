@@ -88,8 +88,19 @@ class HomePage extends StatefulWidget {
   ///
   /// Etapa 6C: desceu 20 dp (topo de 8 → 28 dp). Etapa 6F: o valor vem do
   /// [PageHeader], para o botão ficar na MESMA altura em todas as telas.
-  static const themeButtonInsets =
-      EdgeInsets.only(top: PageHeader.topInset, right: 8);
+  static const themeButtonInsets = EdgeInsets.only(
+    top: PageHeader.topInset,
+    right: 8,
+  );
+
+  /// Altura da faixa fixa do botão de sol/lua: recuo do topo + botão
+  /// (28 + 64 = 92 dp).
+  ///
+  /// Na listagem, a área rolável começa abaixo dessa faixa. Antes ela
+  /// começava no topo da tela: o botão flutuava por cima da lista e, ao
+  /// rolar, a busca, os filtros e os cards passavam por baixo dele.
+  static const double themeBandHeight =
+      PageHeader.topInset + ThemeToggleButton.size;
 
   final LocalImageSource imageSource;
 
@@ -175,8 +186,9 @@ class _HomePageState extends State<HomePage> {
       _categoryFilter.value = CategoryFilter.none;
       _statusFilter.value = StatusFilter.initial;
     } else {
-      _categoryFilter.value =
-          _categoryFilter.value.retainOnly(categories.map((c) => c.id));
+      _categoryFilter.value = _categoryFilter.value.retainOnly(
+        categories.map((c) => c.id),
+      );
     }
     setState(() {
       _projects = projects;
@@ -217,9 +229,9 @@ class _HomePageState extends State<HomePage> {
       images = await widget.imageSource.pickImages();
     } catch (error) {
       debugPrint('Falha ao abrir a galeria: $error');
-      _setStateIfMounted(const _Failed(
-        'Não foi possível abrir a galeria. Tente novamente.',
-      ));
+      _setStateIfMounted(
+        const _Failed('Não foi possível abrir a galeria. Tente novamente.'),
+      );
       return;
     }
 
@@ -235,21 +247,27 @@ class _HomePageState extends State<HomePage> {
     final result = await importPickedImages(
       images,
       repository: _repository,
-      onProgress: (current, total) => _setStateIfMounted(_Busy(
-        total == 1 ? 'Salvando imagem…' : 'Salvando imagem $current de $total…',
-      )),
+      onProgress: (current, total) => _setStateIfMounted(
+        _Busy(
+          total == 1
+              ? 'Salvando imagem…'
+              : 'Salvando imagem $current de $total…',
+        ),
+      ),
     );
     if (!mounted) return;
 
     if (result.allFailed) {
-      setState(() => _state = _Failed(
-            images.length == 1
-                ? 'Não foi possível adicionar a imagem. O arquivo pode estar '
+      setState(
+        () => _state = _Failed(
+          images.length == 1
+              ? 'Não foi possível adicionar a imagem. O arquivo pode estar '
                     'vazio ou corrompido, ou faltar espaço no aparelho.'
-                : 'Não foi possível adicionar nenhuma das ${images.length} '
+              : 'Não foi possível adicionar nenhuma das ${images.length} '
                     'imagens. Os arquivos podem estar vazios ou corrompidos, '
                     'ou faltar espaço no aparelho.',
-          ));
+        ),
+      );
       return;
     }
 
@@ -260,8 +278,7 @@ class _HomePageState extends State<HomePage> {
     _categoryFilter.value = CategoryFilter.none;
     // Imagens novas entram como "Não iniciado": garante esse status no
     // filtro, sem desmarcar os outros que o usuário escolheu.
-    _statusFilter.value =
-        _statusFilter.value.including(ProjectStatus.initial);
+    _statusFilter.value = _statusFilter.value.including(ProjectStatus.initial);
     _setStateIfMounted(const _Idle());
     await _loadHistory();
     _showMessage(importSummary(result));
@@ -271,8 +288,10 @@ class _HomePageState extends State<HomePage> {
   /// status: abrir ou fechar o desenho nunca o altera.
   Future<void> _changeStatus(DrawingProject project) async {
     _searchFocusNode.unfocus();
-    final chosen =
-        await showProjectStatusDialog(context, current: project.status);
+    final chosen = await showProjectStatusDialog(
+      context,
+      current: project.status,
+    );
     // Cancelou ou escolheu o mesmo: nada a gravar.
     if (chosen == null || chosen == project.status || !mounted) return;
 
@@ -287,10 +306,12 @@ class _HomePageState extends State<HomePage> {
             p.id == updated.id ? updated : p,
         ];
       });
-      _showMessage(statusChangedMessage(
-        chosen,
-        hidden: !_statusFilter.value.matches(updated),
-      ));
+      _showMessage(
+        statusChangedMessage(
+          chosen,
+          hidden: !_statusFilter.value.matches(updated),
+        ),
+      );
     } catch (error) {
       debugPrint('Falha ao mudar o status de ${project.id}: $error');
       _showMessage('Não foi possível alterar o status.');
@@ -355,7 +376,8 @@ class _HomePageState extends State<HomePage> {
 
     // Compara com o que está VISÍVEL: uma categoria que não existe mais
     // conta como "sem categoria".
-    final nameChanged = DrawingProject.normalizeCustomName(
+    final nameChanged =
+        DrawingProject.normalizeCustomName(
           edit.name,
           originalName: project.originalName,
         ) !=
@@ -474,16 +496,21 @@ class _HomePageState extends State<HomePage> {
     final Widget content = switch (_state) {
       _Busy(:final message) => HomeLoadingView(message: message),
       _Failed(:final message) => HomeErrorView(
-          message: message,
-          onRetry: _addImages,
-        ),
+        message: message,
+        onRetry: _addImages,
+      ),
       // Primeiro uso (ou histórico vazio): a tela de boas-vindas grande. A
       // busca só aparece quando há o que buscar.
       _Idle() when !hasHistory => HomeWelcomeView(
-          onPick: _addImages,
-          onOpenCategories: _openCategories,
-        ),
-      _Idle() => ProjectHistoryList(
+        onPick: _addImages,
+        onOpenCategories: _openCategories,
+      ),
+      // Listagem: a área rolável começa ABAIXO da faixa do botão de
+      // sol/lua. O `CustomScrollView` recorta o que rola na borda de cima
+      // dele, então nenhum card ou filtro passa por baixo do botão.
+      _Idle() => Padding(
+        padding: const EdgeInsets.only(top: HomePage.themeBandHeight),
+        child: ProjectHistoryList(
           projects: projects!,
           repository: _repository,
           searchController: _searchController,
@@ -498,6 +525,7 @@ class _HomePageState extends State<HomePage> {
           statusFilter: _statusFilter,
           onChangeStatus: _changeStatus,
         ),
+      ),
     };
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -525,6 +553,10 @@ class _HomePageState extends State<HomePage> {
             // como o `Align` anterior). O botão não participa do layout do
             // conteúdo: descer ou aumentar o botão NUNCA empurra a marca nem
             // os botões centrais da tela inicial.
+            //
+            // O botão fica FORA da área rolável: rolar a lista não o move.
+            // Na listagem, a lista começa abaixo dele (`themeBandHeight`),
+            // então nada rola por baixo do botão.
             Positioned(
               top: 0,
               right: 0,
@@ -543,5 +575,4 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
 }
